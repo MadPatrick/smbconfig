@@ -82,7 +82,7 @@ function render() {
       <td class="mono">${escapeHtml(s.path)}</td>
       <td>${escapeHtml(s.group || "")}</td>
       <td><span class="badge ${s.configured ? "bg-success" : "bg-secondary"}">${s.configured ? "ja" : "nee"}</span></td>
-      <td>${s.configured ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${escapeHtml(s.name)}')">Verwijderen</button>` : ""}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${escapeHtml(s.name)}')">Verwijderen</button></td>
     </tr>`).join("");
 
   fillSelect("groupUserSelect", state.users.map(u => u.name));
