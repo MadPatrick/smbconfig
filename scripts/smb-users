@@ -1,0 +1,81 @@
+#!/bin/bash
+# SMB WebAdmin – gebruikersbeheer
+# Gebruik:
+#   smb-users list
+#   smb-users create <gebruikersnaam> <wachtwoord>
+#   smb-users disable <gebruikersnaam>
+#   smb-users delete <gebruikersnaam>
+set -euo pipefail
+
+CMD="${1:-}"
+SAFE_NAME='^[a-zA-Z0-9._-]{1,32}$'
+
+validate_name() {
+  if ! [[ "${1:-}" =~ $SAFE_NAME ]]; then
+    echo "Ongeldige naam: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+case "$CMD" in
+  list)
+    python3 - <<'PY'
+import pwd, subprocess, json
+
+system_min_uid = 1000
+disabled = set()
+
+try:
+    out = subprocess.check_output(["pdbedit", "-L", "-v"], text=True, stderr=subprocess.DEVNULL)
+    current = None
+    for line in out.splitlines():
+        if line.startswith("Unix username:"):
+            current = line.split(":", 1)[1].strip()
+        if current and "Account Flags:" in line and "D" in line:
+            disabled.add(current)
+except Exception:
+    pass
+
+users = []
+for p in pwd.getpwall():
+    if p.pw_uid >= system_min_uid and p.pw_shell in ["/usr/sbin/nologin", "/bin/false", "/sbin/nologin"]:
+        users.append({"name": p.pw_name, "disabled": p.pw_name in disabled})
+
+print(json.dumps(users))
+PY
+    ;;
+
+  create)
+    validate_name "${2:-}"
+    USER_NAME="$2"
+    PASSWORD="${3:-}"
+    if [ ${#PASSWORD} -lt 8 ]; then
+      echo "Wachtwoord te kort" >&2
+      exit 1
+    fi
+    if ! id "$USER_NAME" >/dev/null 2>&1; then
+      useradd -M -s /usr/sbin/nologin "$USER_NAME"
+    fi
+    printf "%s\n%s\n" "$PASSWORD" "$PASSWORD" | smbpasswd -a -s "$USER_NAME"
+    smbpasswd -e "$USER_NAME"
+    ;;
+
+  disable)
+    validate_name "${2:-}"
+    USER_NAME="$2"
+    smbpasswd -d "$USER_NAME"
+    passwd -l "$USER_NAME" >/dev/null 2>&1 || true
+    ;;
+
+  delete)
+    validate_name "${2:-}"
+    USER_NAME="$2"
+    smbpasswd -x "$USER_NAME" >/dev/null 2>&1 || true
+    userdel "$USER_NAME" >/dev/null 2>&1 || true
+    ;;
+
+  *)
+    echo "Gebruik: smb-users {list|create <gebruiker> <wachtwoord>|disable <gebruiker>|delete <gebruiker>}" >&2
+    exit 1
+    ;;
+esac

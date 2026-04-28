@@ -46,8 +46,8 @@ def handle_error(e):
 
 @app.get("/api/state")
 def state():
-    users = json.loads(run_script("smb-list-users"))
-    groups = json.loads(run_script("smb-list-groups"))
+    users = json.loads(run_script("smb-users", "list"))
+    groups = json.loads(run_script("smb-groups", "list"))
     shares = load_shares_file()
     return jsonify({"users": users, "groups": groups, "shares": shares})
 
@@ -58,26 +58,26 @@ def create_user():
     password = data.get("password", "")
     if len(password) < 8:
         raise ValueError("Wachtwoord moet minimaal 8 tekens zijn")
-    run_script("smb-create-user", username, password)
+    run_script("smb-users", "create", username, password)
     return jsonify({"ok": True})
 
 @app.post("/api/users/<username>/disable")
 def disable_user(username):
     username = validate_name(username, "gebruikersnaam")
-    run_script("smb-disable-user", username)
+    run_script("smb-users", "disable", username)
     return jsonify({"ok": True})
 
 @app.delete("/api/users/<username>")
 def delete_user(username):
     username = validate_name(username, "gebruikersnaam")
-    run_script("smb-delete-user", username)
+    run_script("smb-users", "delete", username)
     return jsonify({"ok": True})
 
 @app.post("/api/groups")
 def create_group():
     data = request.json or {}
     groupname = validate_name(data.get("groupname"), "groepsnaam")
-    run_script("smb-create-group", groupname)
+    run_script("smb-groups", "create", groupname)
     return jsonify({"ok": True})
 
 @app.post("/api/groups/add-user")
@@ -85,7 +85,7 @@ def add_user_to_group():
     data = request.json or {}
     username = validate_name(data.get("username"), "gebruikersnaam")
     groupname = validate_name(data.get("groupname"), "groepsnaam")
-    run_script("smb-add-user-to-group", username, groupname)
+    run_script("smb-groups", "add-member", username, groupname)
     return jsonify({"ok": True})
 
 @app.post("/api/shares")
@@ -99,7 +99,7 @@ def create_share():
     if any(s["name"] == name for s in shares):
         raise ValueError("Share bestaat al")
 
-    run_script("smb-create-share", name, path, group)
+    run_script("smb-shares", "create", name, path, group)
 
     shares.append({
         "name": name,
@@ -125,7 +125,7 @@ def set_acl():
     if not match:
         raise ValueError("Share niet gevonden")
 
-    run_script("smb-set-acl", match["path"], group, mode)
+    run_script("smb-shares", "set-acl", match["path"], group, mode)
     return jsonify({"ok": True})
 
 if __name__ == "__main__":
