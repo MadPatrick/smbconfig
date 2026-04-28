@@ -11,6 +11,21 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+# Snelle update-modus: bestanden verversen zonder volledige herinstallatie
+if [[ "${1:-}" == "update" ]]; then
+  echo "=== SMB WebAdmin update ==="
+  echo "→ Bestanden bijwerken in $INSTALL_DIR..."
+  cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" \
+        "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" \
+        "$INSTALL_DIR/"
+  chown -R root:www-data "$INSTALL_DIR/api" "$INSTALL_DIR/scripts"
+  chmod -R 750 "$INSTALL_DIR/scripts/"* "$INSTALL_DIR/api"
+  chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js"
+  systemctl restart smb-webadmin
+  echo "✓ Update klaar – service herstart."
+  exit 0
+fi
+
 echo "=== SMB WebAdmin installatie ==="
 
 # 1. Benodigde pakketten installeren

@@ -41,7 +41,7 @@ except Exception:
 users = [
     {"name": p.pw_name, "disabled": p.pw_name in disabled}
     for p in pwd.getpwall()
-    if p.pw_uid >= 1000
+    if 1000 <= p.pw_uid <= 59999
 ]
 
 print(json.dumps(users))
