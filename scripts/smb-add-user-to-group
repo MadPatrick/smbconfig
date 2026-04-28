@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+USER_NAME="$1"
+GROUP_NAME="$2"
+
+if ! [[ "$USER_NAME" =~ ^[a-zA-Z0-9._-]{1,32}$ ]]; then
+  echo "Invalid username" >&2
+  exit 1
+fi
+
+if ! [[ "$GROUP_NAME" =~ ^[a-zA-Z0-9._-]{1,32}$ ]]; then
+  echo "Invalid group" >&2
+  exit 1
+fi
+
+id "$USER_NAME" >/dev/null
+getent group "$GROUP_NAME" >/dev/null
+usermod -aG "$GROUP_NAME" "$USER_NAME"
