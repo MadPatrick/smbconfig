@@ -10,6 +10,7 @@ set -euo pipefail
 CMD="${1:-}"
 SAFE_NAME='^[a-zA-Z0-9._-]{1,32}$'
 SAFE_PATH='^/[a-zA-Z0-9._/-]{1,240}$'
+SMB_CONF="/etc/samba/smb.conf"
 
 validate_name() {
   if ! [[ "${1:-}" =~ $SAFE_NAME ]]; then
@@ -40,11 +41,15 @@ case "$CMD" in
     chown root:"$GROUP_NAME" "$SHARE_PATH"
     chmod 2770 "$SHARE_PATH"
 
-    CONF_DIR="/etc/samba/smb-webadmin.d"
-    CONF_FILE="$CONF_DIR/$SHARE_NAME.conf"
-    mkdir -p "$CONF_DIR"
+    # Check if share section already exists in smb.conf
+    if grep -q "^\[$SHARE_NAME\]" "$SMB_CONF" 2>/dev/null; then
+      echo "Share bestaat al in smb.conf: $SHARE_NAME" >&2
+      exit 1
+    fi
 
-    cat > "$CONF_FILE" <<EOF
+    # Append share section directly to smb.conf
+    cat >> "$SMB_CONF" <<EOF
+
 [$SHARE_NAME]
    path = $SHARE_PATH
    browseable = yes
@@ -54,15 +59,6 @@ case "$CMD" in
    create mask = 0660
    directory mask = 2770
 EOF
-
-    # Remove any existing include line (may have been appended in wrong location)
-    sed -i '/^[[:space:]]*include = \/etc\/samba\/smb-webadmin\.d\/\*\.conf/d' /etc/samba/smb.conf
-    # Insert include directive into the [global] section so Samba loads it
-    if grep -q "^\[global\]" /etc/samba/smb.conf; then
-      sed -i "/^\[global\]/a\\    include = /etc/samba/smb-webadmin.d/*.conf" /etc/samba/smb.conf
-    else
-      printf '\n[global]\n    include = /etc/samba/smb-webadmin.d/*.conf\n' >> /etc/samba/smb.conf
-    fi
 
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
@@ -100,52 +96,17 @@ EOF
 
   list)
     python3 - <<'PY'
-import os, re, json, configparser
+import json, configparser
 
-CONF_DIR = "/etc/samba/smb-webadmin.d"
 SMB_CONF = "/etc/samba/smb.conf"
 SKIP = {"global", "homes", "printers", "print$"}
 
-def match_val(pattern, content, lower=True):
-    m = re.search(pattern, content, re.MULTILINE)
-    if not m:
-        return ""
-    v = m.group(1).strip()
-    return v.lower() if lower else v
-
-# Read managed shares (webadmin-created conf files)
-managed = {}
-if os.path.isdir(CONF_DIR):
-    for fname in sorted(os.listdir(CONF_DIR)):
-        if not fname.endswith(".conf"):
-            continue
-        fpath = os.path.join(CONF_DIR, fname)
-        try:
-            with open(fpath) as f:
-                content = f.read()
-        except OSError:
-            continue
-        name = match_val(r"^\[([^\]]+)\]", content, lower=False)
-        if name:
-            path = match_val(r"^\s*path\s*=\s*(.+)", content, lower=False)
-            group_m = re.search(r"^\s*valid users\s*=\s*@(\S+)", content, re.MULTILINE)
-            group = group_m.group(1).strip() if group_m else ""
-            managed[name] = {
-                "name": name,
-                "path": path,
-                "group": group,
-                "read_only":  match_val(r"^\s*read only\s*=\s*(\S+)", content),
-                "browseable": match_val(r"^\s*browseable\s*=\s*(\S+)", content),
-                "guest_ok":   match_val(r"^\s*guest ok\s*=\s*(\S+)", content),
-            }
-
-# Also collect unmanaged shares from main smb.conf
-result = list(managed.values())
-if os.path.exists(SMB_CONF):
+result = []
+if __import__("os").path.exists(SMB_CONF):
     cp = configparser.RawConfigParser(strict=False)
     cp.read(SMB_CONF)
     for section in cp.sections():
-        if section.lower() in SKIP or section in managed:
+        if section.lower() in SKIP:
             continue
         valid_users = cp.get(section, "valid users", fallback="")
         group = valid_users[1:].strip() if valid_users.startswith("@") else ""
@@ -165,12 +126,8 @@ PY
   delete)
     validate_name "${2:-}"
     SHARE_NAME="$2"
-    CONF_FILE="/etc/samba/smb-webadmin.d/$SHARE_NAME.conf"
-    if [ -f "$CONF_FILE" ]; then
-      rm -f "$CONF_FILE"
-    else
-      # Remove unmanaged share section directly from smb.conf
-      python3 - "$SHARE_NAME" <<'PY'
+    # Remove share section from smb.conf
+    python3 - "$SHARE_NAME" <<'PY'
 import sys
 from pathlib import Path
 
@@ -196,9 +153,9 @@ for line in lines:
 if not found:
     print(f"Share niet gevonden in smb.conf: {name}", file=sys.stderr)
     sys.exit(1)
-conf.write_text("".join(result))
+# Strip trailing blank lines that were part of the removed section
+conf.write_text("".join(result).rstrip("\n") + "\n")
 PY
-    fi
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
     ;;
