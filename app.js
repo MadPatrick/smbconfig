@@ -78,7 +78,11 @@ function render() {
   document.getElementById("groupsTable").innerHTML = state.groups.map(g => `
     <tr>
       <td class="mono">${escapeHtml(g.name)}</td>
-      <td>${escapeHtml((g.members || []).join(", "))}</td>
+      <td>${(g.members || []).map(m => `
+        <span class="badge bg-secondary me-1">
+          ${escapeHtml(m)}
+          <button type="button" class="btn-close btn-close-white ms-1" style="font-size:.6em;vertical-align:middle;" title="Verwijder uit groep" onclick="removeUserFromGroup('${escapeHtml(m)}','${escapeHtml(g.name)}')"></button>
+        </span>`).join("")}</td>
       <td><button class="btn btn-sm btn-outline-danger" onclick="deleteGroup('${escapeHtml(g.name)}')">Verwijderen</button></td>
     </tr>`).join("");
 
@@ -163,6 +167,15 @@ async function addUserToGroup() {
     validateName(groupname, "groepsnaam");
     await api("POST", "/groups/add-user", { username, groupname });
     alertMsg("success", "Gebruiker toegevoegd aan groep");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function removeUserFromGroup(username, groupname) {
+  if (!confirm(`Gebruiker ${username} uit groep ${groupname} verwijderen?`)) return;
+  try {
+    await api("POST", "/groups/remove-user", { username, groupname });
+    alertMsg("success", `Gebruiker ${username} verwijderd uit groep ${groupname}`);
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }

@@ -81,6 +81,14 @@ def add_user_to_group():
     run_script("smb-groups", "add-member", username, groupname)
     return jsonify({"ok": True})
 
+@app.post("/api/groups/remove-user")
+def remove_user_from_group():
+    data = request.json or {}
+    username = validate_name(data.get("username"), "gebruikersnaam")
+    groupname = validate_name(data.get("groupname"), "groepsnaam")
+    run_script("smb-groups", "remove-member", username, groupname)
+    return jsonify({"ok": True})
+
 @app.delete("/api/groups/<groupname>")
 def delete_group(groupname):
     groupname = validate_name(groupname, "groepsnaam")
