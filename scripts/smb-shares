@@ -148,11 +148,39 @@ PY
     validate_name "${2:-}"
     SHARE_NAME="$2"
     CONF_FILE="/etc/samba/smb-webadmin.d/$SHARE_NAME.conf"
-    if [ ! -f "$CONF_FILE" ]; then
-      echo "Share niet gevonden of niet beheerd door webadmin: $SHARE_NAME" >&2
-      exit 1
+    if [ -f "$CONF_FILE" ]; then
+      rm -f "$CONF_FILE"
+    else
+      # Remove unmanaged share section directly from smb.conf
+      python3 - "$SHARE_NAME" <<'PY'
+import sys
+from pathlib import Path
+
+name = sys.argv[1]
+conf = Path("/etc/samba/smb.conf")
+if not conf.exists():
+    print("smb.conf niet gevonden", file=sys.stderr)
+    sys.exit(1)
+lines = conf.read_text().splitlines(keepends=True)
+result = []
+skip = False
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped == f"[{name}]":
+        skip = True
+        found = True
+        continue
+    if skip and stripped.startswith("[") and stripped.endswith("]"):
+        skip = False
+    if not skip:
+        result.append(line)
+if not found:
+    print(f"Share niet gevonden in smb.conf: {name}", file=sys.stderr)
+    sys.exit(1)
+conf.write_text("".join(result))
+PY
     fi
-    rm -f "$CONF_FILE"
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
     ;;
