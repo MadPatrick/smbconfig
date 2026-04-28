@@ -1,10 +1,39 @@
-const API = "";
+const STORAGE_KEY = "smb-webadmin-state";
 
 let state = {
   users: [],
   groups: [],
   shares: []
 };
+
+const SAFE_NAME = /^[a-zA-Z0-9._-]{1,32}$/;
+const SAFE_PATH = /^\/[a-zA-Z0-9._/\-]{1,240}$/;
+
+function validateName(value, field = "naam") {
+  if (!value || !SAFE_NAME.test(value)) throw new Error(`Ongeldige ${field}`);
+  return value;
+}
+
+function validatePath(value) {
+  if (!value || !SAFE_PATH.test(value) || value.includes("..")) throw new Error("Ongeldig pad");
+  return value;
+}
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      state = JSON.parse(saved);
+    } catch (e) {
+      console.error("Opgeslagen gegevens konden niet worden gelezen, opnieuw beginnen.", e);
+      state = { users: [], groups: [], shares: [] };
+    }
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
 
 document.querySelectorAll("[data-page]").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -29,28 +58,9 @@ function escapeHtml(str) {
   }[s]));
 }
 
-async function api(path, method = "GET", data = null) {
-  const opts = { method, headers: {} };
-  if (data) {
-    opts.headers["Content-Type"] = "application/json";
-    opts.body = JSON.stringify(data);
-  }
-  const res = await fetch(API + path, opts);
-  const text = await res.text();
-  let payload;
-  try { payload = JSON.parse(text); } catch { payload = { message: text }; }
-  if (!res.ok) throw new Error(payload.error || payload.message || "API fout");
-  return payload;
-}
-
-async function loadAll() {
-  try {
-    const data = await api("/api/state");
-    state = data;
-    render();
-  } catch (e) {
-    alertMsg("danger", e.message);
-  }
+function loadAll() {
+  loadState();
+  render();
 }
 
 function render() {
@@ -94,76 +104,106 @@ function fillSelect(id, values) {
   el.innerHTML = values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
 }
 
-async function createUser() {
+function createUser() {
   try {
-    await api("/api/users", "POST", {
-      username: document.getElementById("newUsername").value,
-      password: document.getElementById("newPassword").value
-    });
+    const username = validateName(document.getElementById("newUsername").value, "gebruikersnaam");
+    const password = document.getElementById("newPassword").value;
+    if (password.length < 8) throw new Error("Wachtwoord moet minimaal 8 tekens zijn");
+    if (state.users.some(u => u.name === username)) throw new Error("Gebruiker bestaat al");
+    state.users.push({ name: username, disabled: false });
+    saveState();
     alertMsg("success", "Gebruiker aangemaakt");
+    document.getElementById("newUsername").value = "";
     document.getElementById("newPassword").value = "";
-    await loadAll();
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function disableUser(username) {
+function disableUser(username) {
   if (!confirm(`Gebruiker ${username} uitschakelen?`)) return;
   try {
-    await api(`/api/users/${encodeURIComponent(username)}/disable`, "POST");
+    const user = state.users.find(u => u.name === username);
+    if (!user) throw new Error("Gebruiker niet gevonden");
+    user.disabled = true;
+    saveState();
     alertMsg("success", "Gebruiker uitgeschakeld");
-    await loadAll();
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function deleteUser(username) {
+function deleteUser(username) {
   if (!confirm(`Gebruiker ${username} verwijderen?`)) return;
   try {
-    await api(`/api/users/${encodeURIComponent(username)}`, "DELETE");
+    const idx = state.users.findIndex(u => u.name === username);
+    if (idx === -1) throw new Error("Gebruiker niet gevonden");
+    state.users.splice(idx, 1);
+    state.groups.forEach(g => {
+      if (g.members) g.members = g.members.filter(m => m !== username);
+    });
+    saveState();
     alertMsg("success", "Gebruiker verwijderd");
-    await loadAll();
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function createGroup() {
+function createGroup() {
   try {
-    await api("/api/groups", "POST", { groupname: document.getElementById("newGroup").value });
+    const groupname = validateName(document.getElementById("newGroup").value, "groepsnaam");
+    if (state.groups.some(g => g.name === groupname)) throw new Error("Groep bestaat al");
+    state.groups.push({ name: groupname, members: [] });
+    saveState();
     alertMsg("success", "Groep aangemaakt");
-    await loadAll();
+    document.getElementById("newGroup").value = "";
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function addUserToGroup() {
+function addUserToGroup() {
   try {
-    await api("/api/groups/add-user", "POST", {
-      username: document.getElementById("groupUserSelect").value,
-      groupname: document.getElementById("groupSelect").value
-    });
+    const username = document.getElementById("groupUserSelect").value;
+    const groupname = document.getElementById("groupSelect").value;
+    validateName(username, "gebruikersnaam");
+    validateName(groupname, "groepsnaam");
+    const group = state.groups.find(g => g.name === groupname);
+    if (!group) throw new Error("Groep niet gevonden");
+    if (!group.members) group.members = [];
+    if (!group.members.includes(username)) group.members.push(username);
+    saveState();
     alertMsg("success", "Gebruiker toegevoegd aan groep");
-    await loadAll();
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function createShare() {
+function createShare() {
   try {
-    await api("/api/shares", "POST", {
-      name: document.getElementById("shareName").value,
-      path: document.getElementById("sharePath").value,
-      group: document.getElementById("shareGroup").value
-    });
-    alertMsg("success", "Share aangemaakt. Herstart/reload Samba indien nodig.");
-    await loadAll();
+    const name = validateName(document.getElementById("shareName").value, "share naam");
+    const path = validatePath(document.getElementById("sharePath").value);
+    const group = validateName(document.getElementById("shareGroup").value, "groepsnaam");
+    if (state.shares.some(s => s.name === name)) throw new Error("Share bestaat al");
+    state.shares.push({ name, path, group, configured: true, acls: {} });
+    saveState();
+    alertMsg("success", "Share aangemaakt.");
+    document.getElementById("shareName").value = "";
+    document.getElementById("sharePath").value = "";
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function setAcl() {
+function setAcl() {
   try {
-    await api("/api/shares/acl", "POST", {
-      share: document.getElementById("aclShare").value,
-      group: document.getElementById("aclGroup").value,
-      mode: document.getElementById("aclMode").value
-    });
+    const share = document.getElementById("aclShare").value;
+    const group = document.getElementById("aclGroup").value;
+    const mode = document.getElementById("aclMode").value;
+    validateName(share, "share naam");
+    validateName(group, "groepsnaam");
+    if (!["read", "write", "none"].includes(mode)) throw new Error("Ongeldige ACL mode");
+    const s = state.shares.find(s => s.name === share);
+    if (!s) throw new Error("Share niet gevonden");
+    if (!s.acls) s.acls = {};
+    s.acls[group] = mode;
+    saveState();
     alertMsg("success", "ACL opgeslagen");
-    await loadAll();
+    render();
   } catch (e) { alertMsg("danger", e.message); }
 }
 
