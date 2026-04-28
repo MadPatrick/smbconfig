@@ -76,14 +76,23 @@ function render() {
       <td><button class="btn btn-sm btn-outline-danger" onclick="deleteGroup('${escapeHtml(g.name)}')">Verwijderen</button></td>
     </tr>`).join("");
 
-  document.getElementById("sharesTable").innerHTML = state.shares.map(s => `
+  document.getElementById("sharesTable").innerHTML = state.shares.map(s => {
+    function yesNoBadge(val) {
+      if (val === "yes") return '<span class="badge bg-success">ja</span>';
+      if (val === "no")  return '<span class="badge bg-secondary">nee</span>';
+      return '<span class="badge bg-light text-dark">-</span>';
+    }
+    return `
     <tr>
       <td class="mono">${escapeHtml(s.name)}</td>
       <td class="mono">${escapeHtml(s.path)}</td>
       <td>${escapeHtml(s.group || "")}</td>
-      <td><span class="badge ${s.configured ? "bg-success" : "bg-secondary"}">${s.configured ? "ja" : "nee"}</span></td>
+      <td>${yesNoBadge(s.read_only)}</td>
+      <td>${yesNoBadge(s.browseable)}</td>
+      <td>${yesNoBadge(s.guest_ok)}</td>
       <td><button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${escapeHtml(s.name)}')">Verwijderen</button></td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 
   fillSelect("groupUserSelect", state.users.map(u => u.name));
   fillSelect("groupSelect", state.groups.map(g => g.name));
