@@ -20,26 +20,27 @@ validate_name() {
 case "$CMD" in
   list)
     python3 - <<'PY'
-import pwd, subprocess, json
+import subprocess, json
 
-system_min_uid = 1000
-disabled = set()
+users = []
 
 try:
     out = subprocess.check_output(["pdbedit", "-L", "-v"], text=True, stderr=subprocess.DEVNULL)
     current = None
+    is_disabled = False
     for line in out.splitlines():
         if line.startswith("Unix username:"):
+            if current is not None:
+                users.append({"name": current, "disabled": is_disabled})
             current = line.split(":", 1)[1].strip()
-        if current and "Account Flags:" in line and "D" in line:
-            disabled.add(current)
+            is_disabled = False
+        elif current and "Account Flags:" in line:
+            flags = line.split(":", 1)[1].strip().strip("[]")
+            is_disabled = "D" in flags
+    if current is not None:
+        users.append({"name": current, "disabled": is_disabled})
 except Exception:
     pass
-
-users = []
-for p in pwd.getpwall():
-    if p.pw_uid >= system_min_uid and p.pw_shell in ["/usr/sbin/nologin", "/bin/false", "/sbin/nologin"]:
-        users.append({"name": p.pw_name, "disabled": p.pw_name in disabled})
 
 print(json.dumps(users))
 PY
