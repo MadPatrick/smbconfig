@@ -64,7 +64,7 @@ EOF
       printf '\n[global]\n    include = /etc/samba/smb-webadmin.d/*.conf\n' >> /etc/samba/smb.conf
     fi
 
-    testparm -s >/dev/null
+    testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
     ;;
 
