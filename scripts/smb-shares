@@ -35,11 +35,17 @@ case "$CMD" in
     SHARE_PATH="$3"
     GROUP_NAME="$4"
 
-    getent group "$GROUP_NAME" >/dev/null
+    if [[ "$GROUP_NAME" != "none" ]]; then
+      getent group "$GROUP_NAME" >/dev/null
+    fi
 
     mkdir -p "$SHARE_PATH"
-    chown root:"$GROUP_NAME" "$SHARE_PATH"
-    chmod 2770 "$SHARE_PATH"
+    if [[ "$GROUP_NAME" != "none" ]]; then
+      chown root:"$GROUP_NAME" "$SHARE_PATH"
+      chmod 2770 "$SHARE_PATH"
+    else
+      chmod 0755 "$SHARE_PATH"
+    fi
 
     # Check if share section already exists in smb.conf
     if grep -q "^\[$SHARE_NAME\]" "$SMB_CONF" 2>/dev/null; then
@@ -48,7 +54,8 @@ case "$CMD" in
     fi
 
     # Append share section directly to smb.conf
-    cat >> "$SMB_CONF" <<EOF
+    if [[ "$GROUP_NAME" != "none" ]]; then
+      cat >> "$SMB_CONF" <<EOF
 
 [$SHARE_NAME]
    path = $SHARE_PATH
@@ -59,6 +66,17 @@ case "$CMD" in
    create mask = 0660
    directory mask = 2770
 EOF
+    else
+      cat >> "$SMB_CONF" <<EOF
+
+[$SHARE_NAME]
+   path = $SHARE_PATH
+   browseable = yes
+   read only = no
+   create mask = 0644
+   directory mask = 0755
+EOF
+    fi
 
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true

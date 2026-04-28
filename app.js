@@ -99,7 +99,9 @@ function render() {
 
   fillSelect("groupUserSelect", state.users.map(u => u.name));
   fillSelect("groupSelect", state.groups.map(g => g.name));
-  fillSelect("shareGroup", state.groups.map(g => g.name));
+  const shareGroupEl = document.getElementById("shareGroup");
+  shareGroupEl.innerHTML = `<option value="none">-- geen groep --</option>` +
+    state.groups.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join("");
   fillSelect("aclGroup", state.groups.map(g => g.name));
   fillSelect("aclShare", state.shares.map(s => s.name));
 }
@@ -193,7 +195,8 @@ async function createShare() {
   try {
     const name = validateName(document.getElementById("shareName").value, "share naam");
     const path = validatePath(document.getElementById("sharePath").value);
-    const group = validateName(document.getElementById("shareGroup").value, "groepsnaam");
+    const group = document.getElementById("shareGroup").value;
+    if (group !== "none") validateName(group, "groepsnaam");
     await api("POST", "/shares", { name, path, group });
     document.getElementById("shareName").value = "";
     document.getElementById("sharePath").value = "";
