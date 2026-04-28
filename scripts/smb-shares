@@ -55,9 +55,10 @@ case "$CMD" in
    directory mask = 2770
 EOF
 
-    if ! grep -q "include = /etc/samba/smb-webadmin.d/*.conf" /etc/samba/smb.conf; then
-      printf '\ninclude = /etc/samba/smb-webadmin.d/*.conf\n' >> /etc/samba/smb.conf
-    fi
+    # Remove any existing include line (may have been appended in wrong location)
+    sed -i '/[[:space:]]*include = \/etc\/samba\/smb-webadmin\.d\/\*\.conf/d' /etc/samba/smb.conf
+    # Insert include directive into the [global] section so Samba loads it
+    sed -i "/^\[global\]/a\\    include = /etc/samba/smb-webadmin.d/*.conf" /etc/samba/smb.conf
 
     testparm -s >/dev/null
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
