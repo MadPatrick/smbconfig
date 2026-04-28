@@ -73,6 +73,7 @@ function render() {
     <tr>
       <td class="mono">${escapeHtml(g.name)}</td>
       <td>${escapeHtml((g.members || []).join(", "))}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deleteGroup('${escapeHtml(g.name)}')">Verwijderen</button></td>
     </tr>`).join("");
 
   document.getElementById("sharesTable").innerHTML = state.shares.map(s => `
@@ -81,6 +82,7 @@ function render() {
       <td class="mono">${escapeHtml(s.path)}</td>
       <td>${escapeHtml(s.group || "")}</td>
       <td><span class="badge ${s.configured ? "bg-success" : "bg-secondary"}">${s.configured ? "ja" : "nee"}</span></td>
+      <td>${s.configured ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${escapeHtml(s.name)}')">Verwijderen</button>` : ""}</td>
     </tr>`).join("");
 
   fillSelect("groupUserSelect", state.users.map(u => u.name));
@@ -157,6 +159,15 @@ async function addUserToGroup() {
   } catch (e) { alertMsg("danger", e.message); }
 }
 
+async function deleteGroup(groupname) {
+  if (!confirm(`Groep ${groupname} verwijderen?`)) return;
+  try {
+    await api("DELETE", `/groups/${encodeURIComponent(groupname)}`);
+    alertMsg("success", "Groep verwijderd");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
 async function createShare() {
   try {
     const name = validateName(document.getElementById("shareName").value, "share naam");
@@ -166,6 +177,15 @@ async function createShare() {
     document.getElementById("shareName").value = "";
     document.getElementById("sharePath").value = "";
     alertMsg("success", "Share aangemaakt");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function deleteShare(sharename) {
+  if (!confirm(`Share ${sharename} verwijderen? De map op schijf blijft bewaard.`)) return;
+  try {
+    await api("DELETE", `/shares/${encodeURIComponent(sharename)}`);
+    alertMsg("success", "Share verwijderd");
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }

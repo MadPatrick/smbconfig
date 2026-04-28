@@ -81,6 +81,12 @@ def add_user_to_group():
     run_script("smb-groups", "add-member", username, groupname)
     return jsonify({"ok": True})
 
+@app.delete("/api/groups/<groupname>")
+def delete_group(groupname):
+    groupname = validate_name(groupname, "groepsnaam")
+    run_script("smb-groups", "delete", groupname)
+    return jsonify({"ok": True})
+
 @app.post("/api/shares")
 def create_share():
     data = request.json or {}
@@ -93,6 +99,12 @@ def create_share():
         raise ValueError("Share bestaat al")
 
     run_script("smb-shares", "create", name, path, group)
+    return jsonify({"ok": True})
+
+@app.delete("/api/shares/<sharename>")
+def delete_share(sharename):
+    sharename = validate_name(sharename, "share naam")
+    run_script("smb-shares", "delete", sharename)
     return jsonify({"ok": True})
 
 @app.post("/api/shares/acl")

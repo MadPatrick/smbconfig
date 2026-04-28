@@ -4,6 +4,7 @@
 #   smb-groups list
 #   smb-groups create <groepsnaam>
 #   smb-groups add-member <gebruikersnaam> <groepsnaam>
+#   smb-groups delete <groepsnaam>
 set -euo pipefail
 
 CMD="${1:-}"
@@ -46,8 +47,14 @@ PY
     usermod -aG "$GROUP_NAME" "$USER_NAME"
     ;;
 
+  delete)
+    validate_name "${2:-}"
+    GROUP_NAME="$2"
+    groupdel "$GROUP_NAME"
+    ;;
+
   *)
-    echo "Gebruik: smb-groups {list|create <groep>|add-member <gebruiker> <groep>}" >&2
+    echo "Gebruik: smb-groups {list|create <groep>|add-member <gebruiker> <groep>|delete <groep>}" >&2
     exit 1
     ;;
 esac
