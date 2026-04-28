@@ -100,7 +100,9 @@ def create_share():
     data = request.json or {}
     name = validate_name(data.get("name"), "share naam")
     path = validate_path(data.get("path"))
-    group = validate_name(data.get("group"), "groepsnaam")
+    group = data.get("group", "")
+    if group != "none":
+        group = validate_name(group, "groepsnaam")
 
     existing = json.loads(run_script("smb-shares", "list"))
     if any(s["name"] == name for s in existing):
