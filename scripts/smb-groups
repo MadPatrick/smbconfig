@@ -1,0 +1,53 @@
+#!/bin/bash
+# SMB WebAdmin – groepsbeheer
+# Gebruik:
+#   smb-groups list
+#   smb-groups create <groepsnaam>
+#   smb-groups add-member <gebruikersnaam> <groepsnaam>
+set -euo pipefail
+
+CMD="${1:-}"
+SAFE_NAME='^[a-zA-Z0-9._-]{1,32}$'
+
+validate_name() {
+  if ! [[ "${1:-}" =~ $SAFE_NAME ]]; then
+    echo "Ongeldige naam: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+case "$CMD" in
+  list)
+    python3 - <<'PY'
+import grp, json
+
+groups = []
+for g in grp.getgrall():
+    if g.gr_gid >= 1000:
+        groups.append({"name": g.gr_name, "members": list(g.gr_mem)})
+
+print(json.dumps(groups))
+PY
+    ;;
+
+  create)
+    validate_name "${2:-}"
+    GROUP_NAME="$2"
+    getent group "$GROUP_NAME" >/dev/null || groupadd "$GROUP_NAME"
+    ;;
+
+  add-member)
+    validate_name "${2:-}"
+    validate_name "${3:-}"
+    USER_NAME="$2"
+    GROUP_NAME="$3"
+    id "$USER_NAME" >/dev/null
+    getent group "$GROUP_NAME" >/dev/null
+    usermod -aG "$GROUP_NAME" "$USER_NAME"
+    ;;
+
+  *)
+    echo "Gebruik: smb-groups {list|create <groep>|add-member <gebruiker> <groep>}" >&2
+    exit 1
+    ;;
+esac

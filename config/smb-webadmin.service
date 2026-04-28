@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/smb-webadmin/backend
-ExecStart=/opt/smb-webadmin/backend/venv/bin/python /opt/smb-webadmin/backend/app.py
+WorkingDirectory=/var/www/html/smbadmin/api
+ExecStart=/var/www/html/smbadmin/api/venv/bin/python /var/www/html/smbadmin/api/app.py
 User=www-data
 Group=www-data
 Restart=on-failure

@@ -1,10 +1,4 @@
-# Pas /opt/smb-webadmin aan als je een andere installatiemap gebruikt.
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-list-users
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-list-groups
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-create-user
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-disable-user
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-delete-user
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-create-group
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-add-user-to-group
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-create-share
-www-data ALL=(root) NOPASSWD: /opt/smb-webadmin/scripts/smb-set-acl
+# Pas /var/www/html/smbadmin aan als je een andere installatiemap gebruikt.
+www-data ALL=(root) NOPASSWD: /var/www/html/smbadmin/scripts/smb-users
+www-data ALL=(root) NOPASSWD: /var/www/html/smbadmin/scripts/smb-groups
+www-data ALL=(root) NOPASSWD: /var/www/html/smbadmin/scripts/smb-shares
