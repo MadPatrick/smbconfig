@@ -106,6 +106,13 @@ CONF_DIR = "/etc/samba/smb-webadmin.d"
 SMB_CONF = "/etc/samba/smb.conf"
 SKIP = {"global", "homes", "printers", "print$"}
 
+def match_val(pattern, content, lower=True):
+    m = re.search(pattern, content, re.MULTILINE)
+    if not m:
+        return ""
+    v = m.group(1).strip()
+    return v.lower() if lower else v
+
 # Read managed shares (webadmin-created conf files)
 managed = {}
 if os.path.isdir(CONF_DIR):
@@ -118,14 +125,19 @@ if os.path.isdir(CONF_DIR):
                 content = f.read()
         except OSError:
             continue
-        name_m = re.search(r"^\[([^\]]+)\]", content, re.MULTILINE)
-        path_m = re.search(r"^\s*path\s*=\s*(.+)", content, re.MULTILINE)
-        group_m = re.search(r"^\s*valid users\s*=\s*@(\S+)", content, re.MULTILINE)
-        if name_m:
-            name = name_m.group(1).strip()
-            path = path_m.group(1).strip() if path_m else ""
+        name = match_val(r"^\[([^\]]+)\]", content, lower=False)
+        if name:
+            path = match_val(r"^\s*path\s*=\s*(.+)", content, lower=False)
+            group_m = re.search(r"^\s*valid users\s*=\s*@(\S+)", content, re.MULTILINE)
             group = group_m.group(1).strip() if group_m else ""
-            managed[name] = {"name": name, "path": path, "group": group, "configured": True}
+            managed[name] = {
+                "name": name,
+                "path": path,
+                "group": group,
+                "read_only":  match_val(r"^\s*read only\s*=\s*(\S+)", content),
+                "browseable": match_val(r"^\s*browseable\s*=\s*(\S+)", content),
+                "guest_ok":   match_val(r"^\s*guest ok\s*=\s*(\S+)", content),
+            }
 
 # Also collect unmanaged shares from main smb.conf
 result = list(managed.values())
@@ -135,10 +147,16 @@ if os.path.exists(SMB_CONF):
     for section in cp.sections():
         if section.lower() in SKIP or section in managed:
             continue
-        path = cp.get(section, "path", fallback="")
         valid_users = cp.get(section, "valid users", fallback="")
         group = valid_users[1:].strip() if valid_users.startswith("@") else ""
-        result.append({"name": section, "path": path, "group": group, "configured": False})
+        result.append({
+            "name": section,
+            "path": cp.get(section, "path", fallback=""),
+            "group": group,
+            "read_only":  cp.get(section, "read only",  fallback="").strip().lower(),
+            "browseable": cp.get(section, "browseable", fallback="").strip().lower(),
+            "guest_ok":   cp.get(section, "guest ok",   fallback="").strip().lower(),
+        })
 
 print(json.dumps(result))
 PY
