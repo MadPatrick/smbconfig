@@ -91,8 +91,32 @@ EOF
     esac
     ;;
 
+  list)
+    CONF_DIR="/etc/samba/smb-webadmin.d"
+    result="[]"
+    if [ -d "$CONF_DIR" ]; then
+      shopt -s nullglob
+      files=("$CONF_DIR"/*.conf)
+      shopt -u nullglob
+      if [ "${#files[@]}" -gt 0 ]; then
+        result=$(for f in "${files[@]}"; do
+          name=$(grep -oP '^\[\K[^\]]+' "$f" | head -1)
+          path=$(grep -oP '^\s*path\s*=\s*\K.+' "$f" | head -1 | xargs)
+          group=$(grep -oP '^\s*valid users\s*=\s*@\K\S+' "$f" | head -1)
+          [ -n "$name" ] || continue
+          jq -n \
+            --arg name  "$name" \
+            --arg path  "$path" \
+            --arg group "$group" \
+            '{name: $name, path: $path, group: $group, configured: true}'
+        done | jq -s '.')
+      fi
+    fi
+    echo "$result"
+    ;;
+
   *)
-    echo "Gebruik: smb-shares {create <naam> <pad> <groep>|set-acl <pad> <groep> <mode>}" >&2
+    echo "Gebruik: smb-shares {create <naam> <pad> <groep>|set-acl <pad> <groep> <mode>|list}" >&2
     exit 1
     ;;
 esac
