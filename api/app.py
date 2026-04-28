@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import subprocess
 import re
 import json
@@ -8,8 +7,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[1]
 SHARES_FILE = BASE_DIR / "config" / "shares.json"
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__, static_folder=str(BASE_DIR), static_url_path="")
 
 SAFE_NAME = re.compile(r"^[a-zA-Z0-9._-]{1,32}$")
 SAFE_PATH = re.compile(r"^/[a-zA-Z0-9._/\-]{1,240}$")
@@ -38,6 +36,10 @@ def load_shares_file():
 
 def save_shares_file(shares):
     SHARES_FILE.write_text(json.dumps(shares, indent=2))
+
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
 
 @app.errorhandler(Exception)
 def handle_error(e):
@@ -129,4 +131,4 @@ def set_acl():
     return jsonify({"ok": True})
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)
