@@ -47,6 +47,16 @@ PY
     usermod -aG "$GROUP_NAME" "$USER_NAME"
     ;;
 
+  remove-member)
+    validate_name "${2:-}"
+    validate_name "${3:-}"
+    USER_NAME="$2"
+    GROUP_NAME="$3"
+    id "$USER_NAME" >/dev/null
+    getent group "$GROUP_NAME" >/dev/null
+    gpasswd -d "$USER_NAME" "$GROUP_NAME"
+    ;;
+
   delete)
     validate_name "${2:-}"
     GROUP_NAME="$2"
@@ -54,7 +64,7 @@ PY
     ;;
 
   *)
-    echo "Gebruik: smb-groups {list|create <groep>|add-member <gebruiker> <groep>|delete <groep>}" >&2
+    echo "Gebruik: smb-groups {list|create <groep>|add-member <gebruiker> <groep>|remove-member <gebruiker> <groep>|delete <groep>}" >&2
     exit 1
     ;;
 esac
