@@ -29,9 +29,9 @@ fi
 echo "=== SMB WebAdmin installatie ==="
 
 # 1. Benodigde pakketten installeren
-echo "→ Pakketten installeren (samba, python3, acl)..."
+echo "→ Pakketten installeren (samba, python3, acl, jq)..."
 apt-get update -q
-apt-get install -y -q samba python3 python3-venv acl
+apt-get install -y -q samba python3 python3-venv acl jq
 
 # 2. Bestanden kopiëren
 echo "→ Bestanden kopiëren naar $INSTALL_DIR..."
@@ -44,10 +44,6 @@ chown -R root:www-data "$INSTALL_DIR"
 chmod -R 750 "$INSTALL_DIR"
 chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js"
 chmod 750 "$INSTALL_DIR/scripts/"*
-# shares.json moet door www-data schrijfbaar zijn
-touch "$INSTALL_DIR/config/shares.json"
-chown www-data:www-data "$INSTALL_DIR/config/shares.json"
-chmod 660 "$INSTALL_DIR/config/shares.json"
 
 # 3. Python-omgeving aanmaken
 echo "→ Python-omgeving aanmaken en Flask installeren..."

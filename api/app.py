@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-SHARES_FILE = BASE_DIR / "config" / "shares.json"
 
 app = Flask(__name__, static_folder=str(BASE_DIR), static_url_path="")
 
@@ -29,14 +28,6 @@ def run_script(*args):
         raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Script fout")
     return completed.stdout.strip()
 
-def load_shares_file():
-    if not SHARES_FILE.exists():
-        return []
-    return json.loads(SHARES_FILE.read_text())
-
-def save_shares_file(shares):
-    SHARES_FILE.write_text(json.dumps(shares, indent=2))
-
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
@@ -50,7 +41,7 @@ def handle_error(e):
 def state():
     users = json.loads(run_script("smb-users", "list"))
     groups = json.loads(run_script("smb-groups", "list"))
-    shares = load_shares_file()
+    shares = json.loads(run_script("smb-shares", "list"))
     return jsonify({"users": users, "groups": groups, "shares": shares})
 
 @app.post("/api/users")
@@ -97,19 +88,11 @@ def create_share():
     path = validate_path(data.get("path"))
     group = validate_name(data.get("group"), "groepsnaam")
 
-    shares = load_shares_file()
-    if any(s["name"] == name for s in shares):
+    existing = json.loads(run_script("smb-shares", "list"))
+    if any(s["name"] == name for s in existing):
         raise ValueError("Share bestaat al")
 
     run_script("smb-shares", "create", name, path, group)
-
-    shares.append({
-        "name": name,
-        "path": path,
-        "group": group,
-        "configured": True
-    })
-    save_shares_file(shares)
     return jsonify({"ok": True})
 
 @app.post("/api/shares/acl")
@@ -122,7 +105,7 @@ def set_acl():
     if mode not in ["read", "write", "none"]:
         raise ValueError("Ongeldige ACL mode")
 
-    shares = load_shares_file()
+    shares = json.loads(run_script("smb-shares", "list"))
     match = next((s for s in shares if s["name"] == share), None)
     if not match:
         raise ValueError("Share niet gevonden")
