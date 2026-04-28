@@ -22,7 +22,6 @@ case "$CMD" in
     python3 - <<'PY'
 import pwd, subprocess, json
 
-system_min_uid = 1000
 disabled = set()
 
 try:
@@ -31,15 +30,19 @@ try:
     for line in out.splitlines():
         if line.startswith("Unix username:"):
             current = line.split(":", 1)[1].strip()
-        if current and "Account Flags:" in line and "D" in line:
-            disabled.add(current)
+        elif current and "Account Flags:" in line:
+            flags = line.split(":", 1)[1].strip().strip("[]")
+            if "D" in flags:
+                disabled.add(current)
+            current = None
 except Exception:
     pass
 
-users = []
-for p in pwd.getpwall():
-    if p.pw_uid >= system_min_uid and p.pw_shell in ["/usr/sbin/nologin", "/bin/false", "/sbin/nologin"]:
-        users.append({"name": p.pw_name, "disabled": p.pw_name in disabled})
+users = [
+    {"name": p.pw_name, "disabled": p.pw_name in disabled}
+    for p in pwd.getpwall()
+    if 1000 <= p.pw_uid <= 59999
+]
 
 print(json.dumps(users))
 PY
