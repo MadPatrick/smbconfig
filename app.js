@@ -73,6 +73,11 @@ document.querySelectorAll("[data-page]").forEach(btn => {
     btn.classList.add("active");
     document.querySelectorAll(".page").forEach(p => p.classList.add("d-none"));
     document.getElementById("page-" + btn.dataset.page).classList.remove("d-none");
+    // collapse sidebar on mobile after navigation
+    const nav = document.getElementById("sidebarNav");
+    if (nav && window.innerWidth < 768) {
+      bootstrap.Collapse.getOrCreateInstance(nav).hide();
+    }
   });
 });
 
