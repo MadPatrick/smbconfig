@@ -168,23 +168,5 @@ def delete_share(sharename):
     run_script("smb-shares", "delete", sharename)
     return jsonify({"ok": True})
 
-@app.post("/api/shares/acl")
-def set_acl():
-    data = request.json or {}
-    share = validate_name(data.get("share"), "share naam")
-    group = validate_name(data.get("group"), "groepsnaam")
-    mode = data.get("mode")
-
-    if mode not in ["read", "write", "none"]:
-        raise ValueError("Ongeldige ACL mode")
-
-    shares = json.loads(run_script("smb-shares", "list"))
-    match = next((s for s in shares if s["name"] == share), None)
-    if not match:
-        raise ValueError("Share niet gevonden")
-
-    run_script("smb-shares", "set-acl", match["path"], group, mode)
-    return jsonify({"ok": True})
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
