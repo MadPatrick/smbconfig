@@ -40,8 +40,10 @@ def handle_error(e):
 SMB_CONF = Path("/etc/samba/smb.conf")
 SMB_CONF_KEYS = frozenset([
     "netbios name", "workgroup", "server string",
+    "unix password sync",
     "security", "ntlm auth", "guest account", "map to guest",
-    "bind interfaces only", "interfaces",
+    "bind interfaces only", "interfaces", "socket options",
+    "aio read size", "aio write size", "use sendfile", "min receivefile size",
     "max log size", "logging", "log file",
     "wins support", "local master", "preferred master", "domain master", "os level",
     "force create mode", "force directory mode",
