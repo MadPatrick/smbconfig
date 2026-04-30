@@ -141,6 +141,88 @@ print(json.dumps(result))
 PY
     ;;
 
+  update)
+    validate_name "${2:-}"
+    SHARE_NAME="$2"
+    GROUP_NAME="${3:-none}"
+    READ_ONLY="${4:-no}"
+    BROWSEABLE="${5:-yes}"
+    GUEST_OK="${6:-no}"
+
+    if [[ "$GROUP_NAME" != "none" ]]; then
+      validate_name "$GROUP_NAME"
+      getent group "$GROUP_NAME" >/dev/null
+    fi
+
+    python3 - "$SHARE_NAME" "$GROUP_NAME" "$READ_ONLY" "$BROWSEABLE" "$GUEST_OK" <<'PY'
+import sys
+from pathlib import Path
+
+name = sys.argv[1]
+group = sys.argv[2]
+read_only = sys.argv[3]
+browseable = sys.argv[4]
+guest_ok = sys.argv[5]
+conf_path = Path("/etc/samba/smb.conf")
+if not conf_path.exists():
+    print("smb.conf niet gevonden", file=sys.stderr)
+    sys.exit(1)
+lines = conf_path.read_text().splitlines(keepends=True)
+
+desired = {
+    "read only": read_only,
+    "browseable": browseable,
+    "guest ok": "yes" if guest_ok == "yes" else None,
+}
+if group not in ("none", ""):
+    desired["valid users"] = f"@{group}"
+    desired["force group"] = group
+else:
+    desired["valid users"] = None
+    desired["force group"] = None
+
+result = []
+in_section = False
+handled = set()
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped == f"[{name}]":
+        found = True
+        in_section = True
+        result.append(line)
+        continue
+    if in_section and stripped.startswith("[") and stripped.endswith("]"):
+        for k, v in desired.items():
+            if k not in handled and v is not None:
+                result.append(f"   {k} = {v}\n")
+        in_section = False
+        result.append(line)
+        continue
+    if in_section and "=" in stripped:
+        key = stripped.split("=")[0].strip().lower()
+        if key in desired:
+            handled.add(key)
+            if desired[key] is not None:
+                result.append(f"   {key} = {desired[key]}\n")
+            continue
+    result.append(line)
+
+if in_section:
+    for k, v in desired.items():
+        if k not in handled and v is not None:
+            result.append(f"   {k} = {v}\n")
+
+if not found:
+    print(f"Share niet gevonden: {name}", file=sys.stderr)
+    sys.exit(1)
+
+conf_path.write_text("".join(result))
+PY
+    testparm -s >/dev/null 2>&1 || true
+    systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
+    ;;
+
   delete)
     validate_name "${2:-}"
     SHARE_NAME="$2"
@@ -179,7 +261,7 @@ PY
     ;;
 
   *)
-    echo "Gebruik: smb-shares {create <naam> <pad> <groep>|set-acl <pad> <groep> <mode>|delete <naam>|list}" >&2
+    echo "Gebruik: smb-shares {create <naam> <pad> <groep>|update <naam> <groep> <read_only> <browseable> <guest_ok>|set-acl <pad> <groep> <mode>|delete <naam>|list}" >&2
     exit 1
     ;;
 esac

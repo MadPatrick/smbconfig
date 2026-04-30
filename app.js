@@ -94,16 +94,24 @@ function render() {
       <td><button class="btn btn-sm btn-outline-danger" onclick="deleteGroup('${escapeHtml(g.name)}')">Verwijderen</button></td>
     </tr>`).join("");
 
-  document.getElementById("sharesTable").innerHTML = state.shares.map(s => `
+  document.getElementById("sharesTable").innerHTML = state.shares.map(s => {
+    const sn = escapeHtml(s.name);
+    const groupOptions = `<option value=""${!s.group ? ' selected' : ''}>-- geen groep --</option>` +
+      state.groups.map(g => `<option value="${escapeHtml(g.name)}"${s.group === g.name ? ' selected' : ''}>${escapeHtml(g.name)}</option>`).join("");
+    return `
     <tr>
-      <td class="mono">${escapeHtml(s.name)}</td>
+      <td class="mono">${sn}</td>
       <td class="mono">${escapeHtml(s.path)}</td>
-      <td>${escapeHtml(s.group || "")}</td>
-      <td>${yesNoBadge(s.read_only)}</td>
-      <td>${yesNoBadge(s.browseable)}</td>
-      <td>${yesNoBadge(s.guest_ok)}</td>
-      <td><button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${escapeHtml(s.name)}')">Verwijderen</button></td>
-    </tr>`).join("");
+      <td><select class="form-select form-select-sm" id="sg-${sn}">${groupOptions}</select></td>
+      <td class="text-center"><input type="checkbox" class="form-check-input" id="sro-${sn}"${s.read_only === 'yes' ? ' checked' : ''}></td>
+      <td class="text-center"><input type="checkbox" class="form-check-input" id="sb-${sn}"${s.browseable === 'yes' ? ' checked' : ''}></td>
+      <td class="text-center"><input type="checkbox" class="form-check-input" id="sgo-${sn}"${s.guest_ok === 'yes' ? ' checked' : ''}></td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="updateShare('${sn}')">Opslaan</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${sn}')">Verwijderen</button>
+      </td>
+    </tr>`;
+  }).join("");
 
   fillSelect("groupUserSelect", state.users.map(u => u.name));
   fillSelect("groupSelect", state.groups.map(g => g.name));
@@ -213,6 +221,20 @@ async function createShare() {
     document.getElementById("shareName").value = "";
     document.getElementById("sharePath").value = "";
     alertMsg("success", "Share aangemaakt");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function updateShare(sharename) {
+  try {
+    validateName(sharename, "share naam");
+    const group = document.getElementById("sg-" + sharename).value;
+    const read_only = document.getElementById("sro-" + sharename).checked ? "yes" : "no";
+    const browseable = document.getElementById("sb-" + sharename).checked ? "yes" : "no";
+    const guest_ok = document.getElementById("sgo-" + sharename).checked ? "yes" : "no";
+    if (group) validateName(group, "groepsnaam");
+    await api("POST", `/shares/${encodeURIComponent(sharename)}/update`, { group, read_only, browseable, guest_ok });
+    alertMsg("success", `Share ${escapeHtml(sharename)} opgeslagen`);
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }
