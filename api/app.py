@@ -137,6 +137,31 @@ def create_share():
     run_script("smb-shares", "create", name, path, group)
     return jsonify({"ok": True})
 
+@app.post("/api/shares/<sharename>/update")
+def update_share(sharename):
+    sharename = validate_name(sharename, "share naam")
+    data = request.json or {}
+    group = data.get("group", "")
+    if group and group != "none":
+        group = validate_name(group, "groepsnaam")
+    else:
+        group = "none"
+    read_only = data.get("read_only", "no")
+    browseable = data.get("browseable", "yes")
+    guest_ok = data.get("guest_ok", "no")
+    if read_only not in ("yes", "no"):
+        raise ValueError("Ongeldige read_only waarde")
+    if browseable not in ("yes", "no"):
+        raise ValueError("Ongeldige browseable waarde")
+    if guest_ok not in ("yes", "no"):
+        raise ValueError("Ongeldige guest_ok waarde")
+    shares = json.loads(run_script("smb-shares", "list"))
+    if not any(s["name"] == sharename for s in shares):
+        raise ValueError("Share niet gevonden")
+    run_script("smb-shares", "update", sharename, group, read_only, browseable, guest_ok)
+    return jsonify({"ok": True})
+
+
 @app.delete("/api/shares/<sharename>")
 def delete_share(sharename):
     sharename = validate_name(sharename, "share naam")
