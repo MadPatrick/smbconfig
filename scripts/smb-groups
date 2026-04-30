@@ -24,7 +24,7 @@ import grp, json
 
 groups = []
 for g in grp.getgrall():
-    if g.gr_gid >= 1000:
+    if 1000 <= g.gr_gid < 2000:
         groups.append({"name": g.gr_name, "members": list(g.gr_mem)})
 
 print(json.dumps(groups))

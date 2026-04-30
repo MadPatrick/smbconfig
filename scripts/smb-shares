@@ -146,9 +146,13 @@ desired = {
 if group not in ("none", ""):
     desired["valid users"] = f"@{group}"
     desired["force group"] = group
+    desired["create mask"] = "0660"
+    desired["directory mask"] = "2770"
 else:
     desired["valid users"] = None
     desired["force group"] = None
+    desired["create mask"] = "0644"
+    desired["directory mask"] = "0755"
 
 result = []
 in_section = False
