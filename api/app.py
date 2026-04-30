@@ -37,6 +37,32 @@ def handle_error(e):
     code = 400 if isinstance(e, ValueError) else 500
     return jsonify({"error": str(e)}), code
 
+SMB_CONF = Path("/etc/samba/smb.conf")
+SMB_CONF_KEYS = frozenset(["netbios name", "workgroup", "interfaces", "security", "ntlm auth"])
+
+@app.get("/api/smbconfig")
+def smbconfig():
+    result = {k: "" for k in SMB_CONF_KEYS}
+    try:
+        text = SMB_CONF.read_text(errors="replace")
+    except OSError:
+        return jsonify(result)
+    in_global = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("["):
+            section = stripped[1:].split("]")[0].strip().lower()
+            in_global = section == "global"
+            continue
+        if not in_global or not stripped or stripped.startswith(("#", ";")):
+            continue
+        if "=" in stripped:
+            key, _, value = stripped.partition("=")
+            key = key.strip().lower()
+            if key in SMB_CONF_KEYS:
+                result[key] = value.strip()
+    return jsonify(result)
+
 @app.get("/api/state")
 def state():
     users = json.loads(run_script("smb-users", "list"))
