@@ -163,22 +163,6 @@
           <div class="form-text">Dit maakt de map aan en voegt een include-regel toe in de gegenereerde smb.conf snippet.</div>
         </div>
 
-        <div class="card p-4 mb-4">
-          <h5>ACL / rechten instellen</h5>
-          <div class="row g-2">
-            <div class="col-md-3"><select id="aclShare" class="form-select"></select></div>
-            <div class="col-md-3"><select id="aclGroup" class="form-select"></select></div>
-            <div class="col-md-3">
-              <select id="aclMode" class="form-select">
-                <option value="read">Lezen</option>
-                <option value="write">Lezen + schrijven</option>
-                <option value="none">Intrekken</option>
-              </select>
-            </div>
-            <div class="col-md-3"><button class="btn btn-primary w-100" onclick="setAcl()">Opslaan</button></div>
-          </div>
-        </div>
-
         <div class="card p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Bestaande shares</h5>
@@ -186,7 +170,7 @@
           </div>
           <div class="table-responsive">
             <table class="table">
-              <thead><tr><th>Naam</th><th>Pad</th><th>Groep</th><th>Alleen lezen</th><th>Zichtbaar</th><th>Gasttoegang</th><th>Acties</th></tr></thead>
+              <thead><tr><th>Naam</th><th>Pad</th><th>Groep</th><th>Rechten</th><th>Zichtbaar</th><th>Gasttoegang</th><th>ACL instellen</th><th>Acties</th></tr></thead>
               <tbody id="sharesTable"></tbody>
             </table>
           </div>
