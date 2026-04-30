@@ -1,0 +1,67 @@
+#!/bin/bash
+# SMB WebAdmin – globale Samba configuratie beheren
+# Gebruik:
+#   smb-globalconfig update '<json>'
+set -euo pipefail
+
+CMD="${1:-}"
+
+case "$CMD" in
+  update)
+    JSON_DATA="${2:-{}}"
+    python3 - "$JSON_DATA" <<'PY'
+import sys, json
+from pathlib import Path
+
+data = json.loads(sys.argv[1])
+conf_path = Path("/etc/samba/smb.conf")
+if not conf_path.exists():
+    print("smb.conf niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = conf_path.read_text(errors="replace").splitlines(keepends=True)
+result = []
+in_global = False
+handled = set()
+
+for line in lines:
+    stripped = line.strip()
+    if stripped.startswith("["):
+        if in_global:
+            # End of [global] section: append keys not yet seen
+            for k, v in data.items():
+                if k not in handled and v:
+                    result.append(f"   {k} = {v}\n")
+            in_global = False
+        section = stripped[1:].split("]")[0].strip().lower()
+        in_global = (section == "global")
+        result.append(line)
+        continue
+    if in_global and "=" in stripped and not stripped.startswith(("#", ";")):
+        key = stripped.split("=")[0].strip().lower()
+        if key in data:
+            handled.add(key)
+            v = data[key]
+            if v:
+                result.append(f"   {key} = {v}\n")
+            # empty value: omit the line (removes the key)
+            continue
+    result.append(line)
+
+# Handle [global] as the last section in the file
+if in_global:
+    for k, v in data.items():
+        if k not in handled and v:
+            result.append(f"   {k} = {v}\n")
+
+conf_path.write_text("".join(result))
+PY
+    testparm -s >/dev/null 2>&1 || true
+    systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
+    ;;
+
+  *)
+    echo "Gebruik: smb-globalconfig {update '<json>'}" >&2
+    exit 1
+    ;;
+esac

@@ -10,6 +10,35 @@ let state = {
 const SAFE_NAME = /^[a-zA-Z0-9._-]{1,32}$/;
 const SAFE_PATH = /^\/[a-zA-Z0-9._/\-]{1,240}$/;
 
+const CONFIG_FIELDS = {
+  "netbios name": "cfg-netbios-name",
+  "workgroup": "cfg-workgroup",
+  "server string": "cfg-server-string",
+  "security": "cfg-security",
+  "ntlm auth": "cfg-ntlm-auth",
+  "guest account": "cfg-guest-account",
+  "map to guest": "cfg-map-to-guest",
+  "bind interfaces only": "cfg-bind-interfaces-only",
+  "interfaces": "cfg-interfaces",
+  "max log size": "cfg-max-log-size",
+  "logging": "cfg-logging",
+  "log file": "cfg-log-file",
+  "wins support": "cfg-wins-support",
+  "local master": "cfg-local-master",
+  "preferred master": "cfg-preferred-master",
+  "domain master": "cfg-domain-master",
+  "os level": "cfg-os-level",
+  "force create mode": "cfg-force-create-mode",
+  "force directory mode": "cfg-force-directory-mode",
+  "server min protocol": "cfg-server-min-protocol",
+  "server max protocol": "cfg-server-max-protocol",
+  "pam password change": "cfg-pam-password-change",
+  "passwd program": "cfg-passwd-program",
+  "passwd chat": "cfg-passwd-chat",
+  "obey pam restrictions": "cfg-obey-pam-restrictions",
+  "panic action": "cfg-panic-action",
+};
+
 function validateName(value, field = "naam") {
   if (!value || !SAFE_NAME.test(value)) throw new Error(`Ongeldige ${field}`);
   return value;
@@ -80,6 +109,8 @@ function render() {
   document.getElementById("cfgInterfaces").innerText = cfg["interfaces"] || "-";
   document.getElementById("cfgSecurity").innerText = cfg["security"] || "-";
   document.getElementById("cfgNtlmAuth").innerText = cfg["ntlm auth"] || "-";
+
+  fillSmbConfigForm(cfg);
 
   document.getElementById("usersTable").innerHTML = state.users.map(u => `
     <tr>
@@ -264,6 +295,26 @@ async function deleteShare(sharename) {
   try {
     await api("DELETE", `/shares/${encodeURIComponent(sharename)}`);
     alertMsg("success", "Share verwijderd");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+function fillSmbConfigForm(cfg) {
+  for (const [key, id] of Object.entries(CONFIG_FIELDS)) {
+    const el = document.getElementById(id);
+    if (el) el.value = cfg[key] || "";
+  }
+}
+
+async function saveSmbConfig() {
+  try {
+    const data = {};
+    for (const [key, id] of Object.entries(CONFIG_FIELDS)) {
+      const el = document.getElementById(id);
+      if (el) data[key] = el.value;
+    }
+    await api("POST", "/smbconfig", data);
+    alertMsg("success", "Configuratie opgeslagen");
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }

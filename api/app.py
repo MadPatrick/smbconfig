@@ -38,7 +38,19 @@ def handle_error(e):
     return jsonify({"error": str(e)}), code
 
 SMB_CONF = Path("/etc/samba/smb.conf")
-SMB_CONF_KEYS = frozenset(["netbios name", "workgroup", "interfaces", "security", "ntlm auth"])
+SMB_CONF_KEYS = frozenset([
+    "netbios name", "workgroup", "server string",
+    "security", "ntlm auth", "guest account", "map to guest",
+    "bind interfaces only", "interfaces",
+    "max log size", "logging", "log file",
+    "wins support", "local master", "preferred master", "domain master", "os level",
+    "force create mode", "force directory mode",
+    "server min protocol", "server max protocol",
+    "pam password change", "passwd program", "passwd chat", "obey pam restrictions",
+    "panic action",
+])
+
+SAFE_CONFIG_VALUE = re.compile(r"^[^\n\r\x00#;]{0,500}$")
 
 @app.get("/api/smbconfig")
 def smbconfig():
@@ -62,6 +74,20 @@ def smbconfig():
             if key in SMB_CONF_KEYS:
                 result[key] = value.strip()
     return jsonify(result)
+
+@app.post("/api/smbconfig")
+def save_smbconfig():
+    data = request.json or {}
+    clean = {}
+    for key, value in data.items():
+        if key not in SMB_CONF_KEYS:
+            raise ValueError(f"Onbekende configuratiesleutel: {key}")
+        value = str(value) if value is not None else ""
+        if not SAFE_CONFIG_VALUE.match(value):
+            raise ValueError(f"Ongeldige waarde voor '{key}'")
+        clean[key] = value.strip()
+    run_script("smb-globalconfig", "update", json.dumps(clean))
+    return jsonify({"ok": True})
 
 @app.get("/api/state")
 def state():
