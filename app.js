@@ -94,10 +94,6 @@ function render() {
       <td><button class="btn btn-sm btn-outline-danger" onclick="deleteGroup('${escapeHtml(g.name)}')">Verwijderen</button></td>
     </tr>`).join("");
 
-  const aclGroupOptions = state.groups.length > 0
-    ? state.groups.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join("")
-    : '<option value="" disabled>Geen groepen</option>';
-
   document.getElementById("sharesTable").innerHTML = state.shares.map(s => {
     const sn = escapeHtml(s.name);
     const groupOptions = `<option value=""${!s.group ? ' selected' : ''}>-- geen groep --</option>` +
@@ -115,17 +111,6 @@ function render() {
       </td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sb-${sn}"${s.browseable === 'yes' ? ' checked' : ''}></td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sgo-${sn}"${s.guest_ok === 'yes' ? ' checked' : ''}></td>
-      <td>
-        <div class="d-flex gap-1 flex-wrap">
-          <select class="form-select form-select-sm" style="min-width:7rem" id="saclg-${sn}">${aclGroupOptions}</select>
-          <select class="form-select form-select-sm" style="min-width:9rem" id="saclm-${sn}">
-            <option value="read">Lezen</option>
-            <option value="write">Lezen + schrijven</option>
-            <option value="none">Intrekken</option>
-          </select>
-          <button class="btn btn-sm btn-outline-primary text-nowrap" onclick="setAclInline('${sn}')">ACL opslaan</button>
-        </div>
-      </td>
       <td>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${sn}')">Verwijderen</button>
       </td>
@@ -271,20 +256,6 @@ async function deleteShare(sharename) {
   try {
     await api("DELETE", `/shares/${encodeURIComponent(sharename)}`);
     alertMsg("success", "Share verwijderd");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
-}
-
-async function setAclInline(sharename) {
-  try {
-    validateName(sharename, "share naam");
-    const group = document.getElementById("saclg-" + sharename).value;
-    const mode = document.getElementById("saclm-" + sharename).value;
-    if (!group) throw new Error("Selecteer een groep voor de ACL");
-    validateName(group, "groepsnaam");
-    if (!["read", "write", "none"].includes(mode)) throw new Error("Ongeldige ACL mode");
-    await api("POST", "/shares/acl", { share: sharename, group, mode });
-    alertMsg("success", `ACL opgeslagen voor ${escapeHtml(sharename)}`);
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }

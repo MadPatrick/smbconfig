@@ -43,6 +43,8 @@ case "$CMD" in
     if [[ "$GROUP_NAME" != "none" ]]; then
       chown root:"$GROUP_NAME" "$SHARE_PATH"
       chmod 2770 "$SHARE_PATH"
+      setfacl -m "g:$GROUP_NAME:rwx" "$SHARE_PATH" 2>/dev/null || true
+      setfacl -d -m "g:$GROUP_NAME:rwx" "$SHARE_PATH" 2>/dev/null || true
     else
       chmod 0755 "$SHARE_PATH"
     fi
@@ -219,6 +221,21 @@ if not found:
 
 conf_path.write_text("".join(result))
 PY
+    SHARE_PATH=$(python3 -c "
+import configparser
+cp = configparser.RawConfigParser(strict=False)
+cp.read('/etc/samba/smb.conf')
+print(cp.get('$SHARE_NAME', 'path', fallback=''))
+" 2>/dev/null || echo "")
+    if [[ -n "$SHARE_PATH" && -d "$SHARE_PATH" && "$GROUP_NAME" != "none" ]]; then
+      if [[ "$READ_ONLY" == "yes" ]]; then
+        ACL_PERMS="rx"
+      else
+        ACL_PERMS="rwx"
+      fi
+      setfacl -R -m "g:$GROUP_NAME:$ACL_PERMS" "$SHARE_PATH" 2>/dev/null || true
+      setfacl -R -d -m "g:$GROUP_NAME:$ACL_PERMS" "$SHARE_PATH" 2>/dev/null || true
+    fi
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
     ;;
