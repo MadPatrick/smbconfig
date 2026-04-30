@@ -86,7 +86,7 @@ EOF
 import json, configparser
 
 SMB_CONF = "/etc/samba/smb.conf"
-SKIP = {"global", "homes", "printers", "print$"}
+SKIP = {"global", "printers", "print$"}
 
 result = []
 if __import__("os").path.exists(SMB_CONF):
