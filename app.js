@@ -42,11 +42,19 @@ document.querySelectorAll("[data-page]").forEach(btn => {
 });
 
 function alertMsg(type, msg) {
-  document.getElementById("alertBox").innerHTML = `
+  const box = document.getElementById("alertBox");
+  box.innerHTML = `
     <div class="alert alert-${type} alert-dismissible fade show" role="alert">
       ${escapeHtml(msg)}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>`;
+  setTimeout(() => {
+    const alert = box.querySelector(".alert");
+    if (alert) {
+      alert.classList.remove("show");
+      alert.addEventListener("transitionend", () => alert.remove(), { once: true });
+    }
+  }, 10000);
 }
 
 function escapeHtml(str) {
