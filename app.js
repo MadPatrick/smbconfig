@@ -107,7 +107,6 @@ function render() {
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sb-${sn}"${s.browseable === 'yes' ? ' checked' : ''}></td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sgo-${sn}"${s.guest_ok === 'yes' ? ' checked' : ''}></td>
       <td>
-        <button class="btn btn-sm btn-outline-primary me-1" onclick="updateShare('${sn}')">Opslaan</button>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${sn}')">Verwijderen</button>
       </td>
     </tr>`;
@@ -225,7 +224,7 @@ async function createShare() {
   } catch (e) { alertMsg("danger", e.message); }
 }
 
-async function updateShare(sharename) {
+async function updateShare(sharename, silent = false) {
   try {
     validateName(sharename, "share naam");
     const group = document.getElementById("sg-" + sharename).value;
@@ -234,7 +233,17 @@ async function updateShare(sharename) {
     const guest_ok = document.getElementById("sgo-" + sharename).checked ? "yes" : "no";
     if (group) validateName(group, "groepsnaam");
     await api("POST", `/shares/${encodeURIComponent(sharename)}/update`, { group, read_only, browseable, guest_ok });
-    alertMsg("success", `Share ${escapeHtml(sharename)} opgeslagen`);
+    if (!silent) {
+      alertMsg("success", `Share ${escapeHtml(sharename)} opgeslagen`);
+      await loadAll();
+    }
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function updateAllShares() {
+  try {
+    await Promise.all(state.shares.map(s => updateShare(s.name, true)));
+    alertMsg("success", "Alle shares opgeslagen");
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }
