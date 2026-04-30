@@ -3,7 +3,8 @@ const API = "/api";
 let state = {
   users: [],
   groups: [],
-  shares: []
+  shares: [],
+  smbconfig: {}
 };
 
 const SAFE_NAME = /^[a-zA-Z0-9._-]{1,32}$/;
@@ -65,6 +66,13 @@ function render() {
   document.getElementById("statGroups").innerText = state.groups.length;
   document.getElementById("statShares").innerText = state.shares.length;
 
+  const cfg = state.smbconfig || {};
+  document.getElementById("cfgNetbiosName").innerText = cfg["netbios name"] || "-";
+  document.getElementById("cfgWorkgroup").innerText = cfg["workgroup"] || "-";
+  document.getElementById("cfgInterfaces").innerText = cfg["interfaces"] || "-";
+  document.getElementById("cfgSecurity").innerText = cfg["security"] || "-";
+  document.getElementById("cfgNtlmAuth").innerText = cfg["ntlm auth"] || "-";
+
   document.getElementById("usersTable").innerHTML = state.users.map(u => `
     <tr>
       <td class="mono">${escapeHtml(u.name)}</td>
@@ -113,7 +121,11 @@ function fillSelect(id, values) {
 
 async function loadAll() {
   try {
-    state = await api("GET", "/state");
+    const [stateData, smbconfig] = await Promise.all([
+      api("GET", "/state"),
+      api("GET", "/smbconfig")
+    ]);
+    state = { ...stateData, smbconfig };
     render();
   } catch (e) {
     alertMsg("danger", "Kan gegevens niet laden: " + e.message);
