@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import os
 import subprocess
 import re
 import json
@@ -90,6 +91,14 @@ def save_smbconfig():
         clean[key] = value.strip()
     run_script("smb-globalconfig", "update", json.dumps(clean))
     return jsonify({"ok": True})
+
+@app.get("/api/interfaces")
+def list_interfaces():
+    try:
+        interfaces = sorted(os.listdir('/sys/class/net'))
+    except OSError:
+        interfaces = []
+    return jsonify(interfaces)
 
 @app.get("/api/state")
 def state():
