@@ -19,7 +19,19 @@
         overflow-y: auto;
       }
     }
+    #sidebarNav {
+      position: relative;
+    }
+    #sidebarNav::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url('/logo.svg') right center / auto 80% no-repeat;
+      opacity: 0.35;
+      pointer-events: none;
+    }
     .sidebar .nav-link {
+      position: relative;
       color: #cbd5e1;
       border-radius: .4rem;
       margin-bottom: .15rem;

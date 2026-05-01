@@ -15,12 +15,12 @@ fi
 if [[ "${1:-}" == "update" ]]; then
   echo "=== SMB WebAdmin update ==="
   echo "→ Bestanden bijwerken in $INSTALL_DIR..."
-  cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" \
-        "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" \
+  cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" "$SCRIPT_DIR/favicon.ico" \
+        "$SCRIPT_DIR/logo.svg" "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" \
         "$INSTALL_DIR/"
   chown -R root:www-data "$INSTALL_DIR/api" "$INSTALL_DIR/scripts"
   chmod -R 750 "$INSTALL_DIR/scripts/"* "$INSTALL_DIR/api"
-  chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js"
+  chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js" "$INSTALL_DIR/favicon.ico" "$INSTALL_DIR/logo.svg"
   systemctl restart smb-webadmin
   echo "✓ Update klaar – service herstart."
   exit 0
@@ -36,13 +36,13 @@ apt-get install -y -q samba python3 python3-venv acl jq
 # 2. Bestanden kopiëren
 echo "→ Bestanden kopiëren naar $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
-cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" \
-      "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/config" \
+cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" "$SCRIPT_DIR/favicon.ico" \
+      "$SCRIPT_DIR/logo.svg" "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/config" \
       "$INSTALL_DIR/"
 
 chown -R root:www-data "$INSTALL_DIR"
 chmod -R 750 "$INSTALL_DIR"
-chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js"
+chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js" "$INSTALL_DIR/favicon.ico" "$INSTALL_DIR/logo.svg"
 chmod 750 "$INSTALL_DIR/scripts/"*
 
 # 3. Python-omgeving aanmaken
