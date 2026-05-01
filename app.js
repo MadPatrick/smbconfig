@@ -196,10 +196,13 @@ async function createUser() {
   try {
     const username = validateName(document.getElementById("newUsername").value, "gebruikersnaam");
     const password = document.getElementById("newPassword").value;
+    const passwordConfirm = document.getElementById("newPasswordConfirm").value;
     if (password.length < 8) throw new Error("Wachtwoord moet minimaal 8 tekens zijn");
+    if (password !== passwordConfirm) throw new Error("Wachtwoorden komen niet overeen");
     await api("POST", "/users", { username, password });
     document.getElementById("newUsername").value = "";
     document.getElementById("newPassword").value = "";
+    document.getElementById("newPasswordConfirm").value = "";
     alertMsg("success", "Gebruiker aangemaakt");
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
