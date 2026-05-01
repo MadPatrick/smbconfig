@@ -12,7 +12,12 @@
       background: #111827;
     }
     @media (min-width: 768px) {
-      .sidebar { min-height: 100vh; }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
     }
     .sidebar .nav-link {
       color: #cbd5e1;
@@ -93,14 +98,31 @@
         <div class="row g-3 mt-1">
           <div class="col-12">
             <div class="card p-3">
+              <h5 class="mb-2">Systeem info</h5>
+              <table class="table table-sm mb-0">
+                <tbody>
+                  <tr><th style="width:160px">Hostname</th><td id="siHostname" class="mono">-</td></tr>
+                  <tr><th>IP adres</th><td id="siIp" class="mono">-</td></tr>
+                  <tr><th>Distro</th><td id="siDistro">-</td></tr>
+                  <tr><th>Kernel</th><td id="siKernel" class="mono">-</td></tr>
+                  <tr><th>Architectuur</th><td id="siArch" class="mono">-</td></tr>
+                  <tr><th>Samba versie</th><td id="siSamba" class="mono">-</td></tr>
+                  <tr><th>Uptime</th><td id="siUptime">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-12">
+            <div class="card p-3">
               <h5 class="mb-2">Samba configuratie <small class="text-muted fs-6">(smb.conf)</small></h5>
               <table class="table table-sm mb-0">
                 <tbody>
-                  <tr><th style="width:200px" class="mono">netbios name</th><td id="cfgNetbiosName" class="mono">-</td></tr>
-                  <tr><th class="mono">workgroup</th><td id="cfgWorkgroup" class="mono">-</td></tr>
-                  <tr><th class="mono">interfaces</th><td id="cfgInterfaces" class="mono">-</td></tr>
-                  <tr><th class="mono">security</th><td id="cfgSecurity" class="mono">-</td></tr>
-                  <tr><th class="mono">ntlm auth</th><td id="cfgNtlmAuth" class="mono">-</td></tr>
+                  <tr><th style="width:200px">Netbios naam</th><td id="cfgNetbiosName" class="mono">-</td></tr>
+                  <tr><th>Werkgroep</th><td id="cfgWorkgroup" class="mono">-</td></tr>
+                  <tr><th>Interfaces</th><td id="cfgInterfaces" class="mono">-</td></tr>
+
                 </tbody>
               </table>
             </div>

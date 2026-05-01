@@ -92,6 +92,59 @@ def save_smbconfig():
     run_script("smb-globalconfig", "update", json.dumps(clean))
     return jsonify({"ok": True})
 
+@app.get("/api/sysinfo")
+def sysinfo():
+    def _read(path, fallback=""):
+        try:
+            return Path(path).read_text(errors="replace").strip()
+        except OSError:
+            return fallback
+
+    def _run_safe(*cmd):
+        try:
+            result = subprocess.run(list(cmd), text=True, capture_output=True, timeout=5)
+            return result.stdout.strip() if result.returncode == 0 else ""
+        except Exception:
+            return ""
+
+    # Distro
+    distro = ""
+    os_release = _read("/etc/os-release")
+    for line in os_release.splitlines():
+        if line.startswith("PRETTY_NAME="):
+            distro = line.split("=", 1)[1].strip().strip('"')
+            break
+
+    # Kernel
+    kernel = _run_safe("uname", "-r")
+
+    # Samba version
+    smb_version = _run_safe("smbd", "--version")
+    if not smb_version:
+        smb_version = _run_safe("samba", "--version")
+
+    # Hostname
+    hostname = _run_safe("hostname")
+
+    # Uptime (human-readable via uptime -p, fallback to raw)
+    uptime = _run_safe("uptime", "-p") or _run_safe("uptime")
+
+    # Architecture
+    arch = _run_safe("uname", "-m")
+
+    # IP address(es) – hostname -I returns space-separated list
+    ip = _run_safe("hostname", "-I").split()[0] if _run_safe("hostname", "-I") else ""
+
+    return jsonify({
+        "distro": distro,
+        "kernel": kernel,
+        "samba": smb_version,
+        "hostname": hostname,
+        "uptime": uptime,
+        "arch": arch,
+        "ip": ip,
+    })
+
 @app.get("/api/interfaces")
 def list_interfaces():
     try:
