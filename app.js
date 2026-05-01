@@ -118,8 +118,6 @@ function render() {
   document.getElementById("cfgNetbiosName").innerText = cfg["netbios name"] || "-";
   document.getElementById("cfgWorkgroup").innerText = cfg["workgroup"] || "-";
   document.getElementById("cfgInterfaces").innerText = cfg["interfaces"] || "-";
-  document.getElementById("cfgSecurity").innerText = cfg["security"] || "-";
-  document.getElementById("cfgNtlmAuth").innerText = cfg["ntlm auth"] || "-";
 
   fillSmbConfigForm(cfg);
 
