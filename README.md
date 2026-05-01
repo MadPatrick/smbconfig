@@ -56,6 +56,25 @@ smbconfig/
 
 ---
 
+## Update
+
+Om de applicatie bij te werken naar de nieuwste versie, haal je eerst de laatste wijzigingen op via Git en voer je daarna het installatiescript uit in update-modus:
+
+```bash
+cd smbconfig
+git pull
+sudo bash install.sh update
+```
+
+Het update-commando:
+- vervangt de applicatiebestanden in `/opt/smbadmin/` door de nieuwste versie
+- past de bestandsrechten opnieuw toe
+- herstart de `smb-webadmin` service automatisch
+
+> **Let op:** de sudoers-configuratie en de systemd-service worden bij een update **niet** aangepast. Voer een volledige herinstallatie uit als die bestanden zijn gewijzigd.
+
+---
+
 ## Beheer
 
 ```bash
