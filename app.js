@@ -94,7 +94,7 @@ function alertMsg(type, msg) {
       alert.classList.remove("show");
       alert.addEventListener("transitionend", () => alert.remove(), { once: true });
     }
-  }, 10000);
+  }, 4000);
 }
 
 function escapeHtml(str) {
@@ -122,6 +122,20 @@ function render() {
   document.getElementById("cfgNtlmAuth").innerText = cfg["ntlm auth"] || "-";
 
   fillSmbConfigForm(cfg);
+
+  const ifaceEl = document.getElementById("cfg-interfaces");
+  if (ifaceEl) {
+    const currentVal = cfg["interfaces"] || "";
+    ifaceEl.innerHTML = '<option value="">-- niet ingesteld --</option>' +
+      (state.interfaces || []).map(iface => `<option value="${escapeHtml(iface)}">${escapeHtml(iface)}</option>`).join("");
+    if (currentVal && !(state.interfaces || []).includes(currentVal)) {
+      const opt = document.createElement("option");
+      opt.value = currentVal;
+      opt.text = currentVal;
+      ifaceEl.appendChild(opt);
+    }
+    ifaceEl.value = currentVal;
+  }
 
   document.getElementById("usersTable").innerHTML = state.users.map(u => `
     <tr>
@@ -181,11 +195,12 @@ function fillSelect(id, values) {
 
 async function loadAll() {
   try {
-    const [stateData, smbconfig] = await Promise.all([
+    const [stateData, smbconfig, interfaces] = await Promise.all([
       api("GET", "/state"),
-      api("GET", "/smbconfig")
+      api("GET", "/smbconfig"),
+      api("GET", "/interfaces")
     ]);
-    state = { ...stateData, smbconfig };
+    state = { ...stateData, smbconfig, interfaces };
     render();
   } catch (e) {
     alertMsg("danger", "Kan gegevens niet laden: " + e.message);
