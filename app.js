@@ -122,6 +122,7 @@ function render() {
 
   const si = state.sysinfo || {};
   document.getElementById("siHostname").innerText = si.hostname || "-";
+  document.getElementById("siIp").innerText       = si.ip       || "-";
   document.getElementById("siDistro").innerText   = si.distro   || "-";
   document.getElementById("siKernel").innerText   = si.kernel   || "-";
   document.getElementById("siArch").innerText     = si.arch     || "-";

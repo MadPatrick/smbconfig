@@ -132,6 +132,9 @@ def sysinfo():
     # Architecture
     arch = _run_safe("uname", "-m")
 
+    # IP address(es) – hostname -I returns space-separated list
+    ip = _run_safe("hostname", "-I").split()[0] if _run_safe("hostname", "-I") else ""
+
     return jsonify({
         "distro": distro,
         "kernel": kernel,
@@ -139,6 +142,7 @@ def sysinfo():
         "hostname": hostname,
         "uptime": uptime,
         "arch": arch,
+        "ip": ip,
     })
 
 @app.get("/api/interfaces")
