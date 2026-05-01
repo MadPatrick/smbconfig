@@ -10,20 +10,6 @@
     body { background: #f5f7fb; font-size: .9rem; }
     .sidebar {
       background: #111827;
-      position: relative;
-      overflow: hidden;
-    }
-    .sidebar::after {
-      content: "";
-      position: absolute;
-      right: -10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 140px;
-      height: 140px;
-      background: url('/favicon.ico') center/contain no-repeat;
-      opacity: 0.5;
-      pointer-events: none;
     }
     @media (min-width: 768px) {
       .sidebar {
@@ -33,7 +19,19 @@
         overflow-y: auto;
       }
     }
+    #sidebarNav {
+      position: relative;
+    }
+    #sidebarNav::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url('/logo.svg') right center / auto 100% no-repeat;
+      opacity: 0.5;
+      pointer-events: none;
+    }
     .sidebar .nav-link {
+      position: relative;
       color: #cbd5e1;
       border-radius: .4rem;
       margin-bottom: .15rem;
