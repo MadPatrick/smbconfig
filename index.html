@@ -205,268 +205,290 @@
           <button class="btn btn-primary" onclick="loadAll()">Vernieuwen</button>
         </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Algemene server info</h5>
-          <div class="row g-2">
-            <div class="col-md-4">
-              <label class="form-label mono">netbios name</label>
-              <input id="cfg-netbios-name" class="form-control" placeholder="MEDIA">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label mono">workgroup</label>
-              <input id="cfg-workgroup" class="form-control" placeholder="WORKGROUP">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label mono">server string</label>
-              <input id="cfg-server-string" class="form-control" placeholder="Samba %v on (%h)">
-            </div>
-          </div>
-        </div>
-
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Beveiliging</h5>
-          <div class="row g-2">
-            <div class="col-md-3">
-              <label class="form-label mono">security</label>
-              <select id="cfg-security" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="user">user</option>
-                <option value="domain">domain</option>
-                <option value="ads">ads</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">ntlm auth</label>
-              <select id="cfg-ntlm-auth" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-                <option value="ntlmv1-permitted">ntlmv1-permitted</option>
-                <option value="ntlmv2-only">ntlmv2-only</option>
-                <option value="mschapv2-and-ntlmv2-only">mschapv2-and-ntlmv2-only</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">guest account</label>
-              <input id="cfg-guest-account" class="form-control" placeholder="nobody">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">map to guest</label>
-              <select id="cfg-map-to-guest" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="Never">Never</option>
-                <option value="Bad User">Bad User</option>
-                <option value="Bad Password">Bad Password</option>
-                <option value="Bad Uid">Bad Uid</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label mono">unix password sync</label>
-              <select id="cfg-unix-password-sync" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Algemene server info</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">netbios name</label>
+                  <input id="cfg-netbios-name" class="form-control" placeholder="MEDIA">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">workgroup</label>
+                  <input id="cfg-workgroup" class="form-control" placeholder="WORKGROUP">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">server string</label>
+                  <input id="cfg-server-string" class="form-control" placeholder="Samba %v on (%h)">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Netwerk en performance</h5>
-          <div class="row g-2">
-            <div class="col-md-4">
-              <label class="form-label mono">bind interfaces only</label>
-              <select id="cfg-bind-interfaces-only" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label mono">interfaces</label>
-              <input id="cfg-interfaces" class="form-control" placeholder="ens224">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label mono">socket options</label>
-              <input id="cfg-socket-options" class="form-control" placeholder="TCP_NODELAY">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Beveiliging</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">security</label>
+                  <select id="cfg-security" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="user">user</option>
+                    <option value="domain">domain</option>
+                    <option value="ads">ads</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">ntlm auth</label>
+                  <select id="cfg-ntlm-auth" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                    <option value="ntlmv1-permitted">ntlmv1-permitted</option>
+                    <option value="ntlmv2-only">ntlmv2-only</option>
+                    <option value="mschapv2-and-ntlmv2-only">mschapv2-and-ntlmv2-only</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">guest account</label>
+                  <input id="cfg-guest-account" class="form-control" placeholder="nobody">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">map to guest</label>
+                  <select id="cfg-map-to-guest" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="Never">Never</option>
+                    <option value="Bad User">Bad User</option>
+                    <option value="Bad Password">Bad Password</option>
+                    <option value="Bad Uid">Bad Uid</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">unix password sync</label>
+                  <select id="cfg-unix-password-sync" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Performance (AIO)</h5>
-          <div class="row g-2">
-            <div class="col-md-3">
-              <label class="form-label mono">aio read size</label>
-              <input id="cfg-aio-read-size" type="number" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">aio write size</label>
-              <input id="cfg-aio-write-size" type="number" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">use sendfile</label>
-              <select id="cfg-use-sendfile" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">min receivefile size</label>
-              <input id="cfg-min-receivefile-size" type="number" class="form-control" placeholder="16384">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Netwerk en performance</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">bind interfaces only</label>
+                  <select id="cfg-bind-interfaces-only" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">interfaces</label>
+                  <input id="cfg-interfaces" class="form-control" placeholder="ens224">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">socket options</label>
+                  <input id="cfg-socket-options" class="form-control" placeholder="TCP_NODELAY">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Logging</h5>
-          <div class="row g-2">
-            <div class="col-md-3">
-              <label class="form-label mono">max log size</label>
-              <input id="cfg-max-log-size" type="number" class="form-control" placeholder="5000">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">logging</label>
-              <input id="cfg-logging" class="form-control" placeholder="file">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label mono">log file</label>
-              <input id="cfg-log-file" class="form-control" placeholder="/var/log/samba/log.%m">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Performance (AIO)</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">aio read size</label>
+                  <input id="cfg-aio-read-size" type="number" class="form-control" placeholder="1">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">aio write size</label>
+                  <input id="cfg-aio-write-size" type="number" class="form-control" placeholder="1">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">use sendfile</label>
+                  <select id="cfg-use-sendfile" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">min receivefile size</label>
+                  <input id="cfg-min-receivefile-size" type="number" class="form-control" placeholder="16384">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">WINS / Browser</h5>
-          <div class="row g-2">
-            <div class="col-md-2">
-              <label class="form-label mono">wins support</label>
-              <select id="cfg-wins-support" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label mono">local master</label>
-              <select id="cfg-local-master" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label mono">preferred master</label>
-              <select id="cfg-preferred-master" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label mono">domain master</label>
-              <select id="cfg-domain-master" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label mono">os level</label>
-              <input id="cfg-os-level" type="number" class="form-control" placeholder="65">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Logging</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">max log size</label>
+                  <input id="cfg-max-log-size" type="number" class="form-control" placeholder="5000">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">logging</label>
+                  <input id="cfg-logging" class="form-control" placeholder="file">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">log file</label>
+                  <input id="cfg-log-file" class="form-control" placeholder="/var/log/samba/log.%m">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Bestands- en directory rechten</h5>
-          <div class="row g-2">
-            <div class="col-md-6">
-              <label class="form-label mono">force create mode</label>
-              <input id="cfg-force-create-mode" class="form-control" placeholder="0774">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label mono">force directory mode</label>
-              <input id="cfg-force-directory-mode" class="form-control" placeholder="0775">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">WINS / Browser</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">wins support</label>
+                  <select id="cfg-wins-support" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">local master</label>
+                  <select id="cfg-local-master" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">preferred master</label>
+                  <select id="cfg-preferred-master" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">domain master</label>
+                  <select id="cfg-domain-master" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">os level</label>
+                  <input id="cfg-os-level" type="number" class="form-control" placeholder="65">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">SMB protocol versies</h5>
-          <div class="row g-2">
-            <div class="col-md-6">
-              <label class="form-label mono">server min protocol</label>
-              <select id="cfg-server-min-protocol" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="NT1">NT1</option>
-                <option value="SMB2">SMB2</option>
-                <option value="SMB2_02">SMB2_02</option>
-                <option value="SMB2_10">SMB2_10</option>
-                <option value="SMB2_22">SMB2_22</option>
-                <option value="SMB2_24">SMB2_24</option>
-                <option value="SMB3">SMB3</option>
-                <option value="SMB3_00">SMB3_00</option>
-                <option value="SMB3_02">SMB3_02</option>
-                <option value="SMB3_11">SMB3_11</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label mono">server max protocol</label>
-              <select id="cfg-server-max-protocol" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="NT1">NT1</option>
-                <option value="SMB2">SMB2</option>
-                <option value="SMB2_02">SMB2_02</option>
-                <option value="SMB2_10">SMB2_10</option>
-                <option value="SMB2_22">SMB2_22</option>
-                <option value="SMB2_24">SMB2_24</option>
-                <option value="SMB3">SMB3</option>
-                <option value="SMB3_00">SMB3_00</option>
-                <option value="SMB3_02">SMB3_02</option>
-                <option value="SMB3_11">SMB3_11</option>
-              </select>
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Bestands- en directory rechten</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">force create mode</label>
+                  <input id="cfg-force-create-mode" class="form-control" placeholder="0774">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">force directory mode</label>
+                  <input id="cfg-force-directory-mode" class="form-control" placeholder="0775">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">PAM wachtwoordwijziging</h5>
-          <div class="row g-2">
-            <div class="col-md-3">
-              <label class="form-label mono">pam password change</label>
-              <select id="cfg-pam-password-change" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label mono">obey pam restrictions</label>
-              <select id="cfg-obey-pam-restrictions" class="form-select">
-                <option value="">-- niet ingesteld --</option>
-                <option value="yes">yes</option>
-                <option value="no">no</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label mono">passwd program</label>
-              <input id="cfg-passwd-program" class="form-control" placeholder="/usr/bin/passwd %u">
-            </div>
-            <div class="col-12">
-              <label class="form-label mono">passwd chat</label>
-              <input id="cfg-passwd-chat" class="form-control" placeholder="*Enter\snew\s*\spassword:* %n\n *Retype\snew\s*\spassword:* %n\n *password\supdated\ssuccessfully* .">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">SMB protocol versies</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">server min protocol</label>
+                  <select id="cfg-server-min-protocol" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="NT1">NT1</option>
+                    <option value="SMB2">SMB2</option>
+                    <option value="SMB2_02">SMB2_02</option>
+                    <option value="SMB2_10">SMB2_10</option>
+                    <option value="SMB2_22">SMB2_22</option>
+                    <option value="SMB2_24">SMB2_24</option>
+                    <option value="SMB3">SMB3</option>
+                    <option value="SMB3_00">SMB3_00</option>
+                    <option value="SMB3_02">SMB3_02</option>
+                    <option value="SMB3_11">SMB3_11</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">server max protocol</label>
+                  <select id="cfg-server-max-protocol" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="NT1">NT1</option>
+                    <option value="SMB2">SMB2</option>
+                    <option value="SMB2_02">SMB2_02</option>
+                    <option value="SMB2_10">SMB2_10</option>
+                    <option value="SMB2_22">SMB2_22</option>
+                    <option value="SMB2_24">SMB2_24</option>
+                    <option value="SMB3">SMB3</option>
+                    <option value="SMB3_00">SMB3_00</option>
+                    <option value="SMB3_02">SMB3_02</option>
+                    <option value="SMB3_11">SMB3_11</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card p-3 mb-3">
-          <h5 class="mb-2">Panic actie bij fouten</h5>
-          <div class="row g-2">
-            <div class="col-12">
-              <label class="form-label mono">panic action</label>
-              <input id="cfg-panic-action" class="form-control" placeholder="/usr/share/samba/panic-action %d">
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">PAM wachtwoordwijziging</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">pam password change</label>
+                  <select id="cfg-pam-password-change" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">obey pam restrictions</label>
+                  <select id="cfg-obey-pam-restrictions" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">passwd program</label>
+                  <input id="cfg-passwd-program" class="form-control" placeholder="/usr/bin/passwd %u">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">passwd chat</label>
+                  <input id="cfg-passwd-chat" class="form-control" placeholder="*Enter\snew\s*\spassword:* %n\n *Retype\snew\s*\spassword:* %n\n *password\supdated\ssuccessfully* .">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Panic actie bij fouten</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">panic action</label>
+                  <input id="cfg-panic-action" class="form-control" placeholder="/usr/share/samba/panic-action %d">
+                </div>
+              </div>
             </div>
           </div>
         </div>
