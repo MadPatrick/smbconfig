@@ -10,6 +10,20 @@
     body { background: #f5f7fb; font-size: .9rem; }
     .sidebar {
       background: #111827;
+      position: relative;
+      overflow: hidden;
+    }
+    .sidebar::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 140px;
+      height: 140px;
+      background: url('/favicon.ico') center/contain no-repeat;
+      opacity: 0.5;
+      pointer-events: none;
     }
     @media (min-width: 768px) {
       .sidebar {
