@@ -4,7 +4,8 @@ let state = {
   users: [],
   groups: [],
   shares: [],
-  smbconfig: {}
+  smbconfig: {},
+  sysinfo: {}
 };
 
 const SAFE_NAME = /^[a-zA-Z0-9._-]{1,32}$/;
@@ -119,6 +120,14 @@ function render() {
   document.getElementById("cfgWorkgroup").innerText = cfg["workgroup"] || "-";
   document.getElementById("cfgInterfaces").innerText = cfg["interfaces"] || "-";
 
+  const si = state.sysinfo || {};
+  document.getElementById("siHostname").innerText = si.hostname || "-";
+  document.getElementById("siDistro").innerText   = si.distro   || "-";
+  document.getElementById("siKernel").innerText   = si.kernel   || "-";
+  document.getElementById("siArch").innerText     = si.arch     || "-";
+  document.getElementById("siSamba").innerText    = si.samba    || "-";
+  document.getElementById("siUptime").innerText   = si.uptime   || "-";
+
   fillSmbConfigForm(cfg);
 
   const ifaceEl = document.getElementById("cfg-interfaces");
@@ -193,12 +202,13 @@ function fillSelect(id, values) {
 
 async function loadAll() {
   try {
-    const [stateData, smbconfig, interfaces] = await Promise.all([
+    const [stateData, smbconfig, interfaces, sysinfo] = await Promise.all([
       api("GET", "/state"),
       api("GET", "/smbconfig"),
-      api("GET", "/interfaces")
+      api("GET", "/interfaces"),
+      api("GET", "/sysinfo")
     ]);
-    state = { ...stateData, smbconfig, interfaces };
+    state = { ...stateData, smbconfig, interfaces, sysinfo };
     render();
   } catch (e) {
     alertMsg("danger", "Kan gegevens niet laden: " + e.message);
