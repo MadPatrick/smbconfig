@@ -101,9 +101,11 @@ if __import__("os").path.exists(SMB_CONF):
             "name": section,
             "path": cp.get(section, "path", fallback=""),
             "group": group,
-            "read_only":  cp.get(section, "read only",  fallback="").strip().lower(),
-            "browseable": cp.get(section, "browseable", fallback="").strip().lower(),
-            "guest_ok":   cp.get(section, "guest ok",   fallback="").strip().lower(),
+            "read_only":       cp.get(section, "read only",       fallback="").strip().lower(),
+            "browseable":      cp.get(section, "browseable",      fallback="").strip().lower(),
+            "guest_ok":        cp.get(section, "guest ok",        fallback="").strip().lower(),
+            "level2_oplocks":  cp.get(section, "level2 oplocks",  fallback="").strip().lower(),
+            "change_notify":   cp.get(section, "change notify",   fallback="").strip().lower(),
         })
 
 print(json.dumps(result))
@@ -117,13 +119,15 @@ PY
     READ_ONLY="${4:-no}"
     BROWSEABLE="${5:-yes}"
     GUEST_OK="${6:-no}"
+    LEVEL2_OPLOCKS="${7:-}"
+    CHANGE_NOTIFY="${8:-}"
 
     if [[ "$GROUP_NAME" != "none" ]]; then
       validate_name "$GROUP_NAME"
       getent group "$GROUP_NAME" >/dev/null
     fi
 
-    python3 - "$SHARE_NAME" "$GROUP_NAME" "$READ_ONLY" "$BROWSEABLE" "$GUEST_OK" <<'PY'
+    python3 - "$SHARE_NAME" "$GROUP_NAME" "$READ_ONLY" "$BROWSEABLE" "$GUEST_OK" "$LEVEL2_OPLOCKS" "$CHANGE_NOTIFY" <<'PY'
 import sys
 from pathlib import Path
 
@@ -132,6 +136,8 @@ group = sys.argv[2]
 read_only = sys.argv[3]
 browseable = sys.argv[4]
 guest_ok = sys.argv[5]
+level2_oplocks = sys.argv[6]
+change_notify = sys.argv[7]
 conf_path = Path("/etc/samba/smb.conf")
 if not conf_path.exists():
     print("smb.conf niet gevonden", file=sys.stderr)
@@ -142,6 +148,8 @@ desired = {
     "read only": read_only,
     "browseable": browseable,
     "guest ok": "yes" if guest_ok == "yes" else None,
+    "level2 oplocks": level2_oplocks if level2_oplocks in ("yes", "no") else None,
+    "change notify": change_notify if change_notify in ("yes", "no") else None,
 }
 if group not in ("none", ""):
     desired["valid users"] = f"@{group}"
@@ -234,7 +242,7 @@ PY
     ;;
 
   *)
-    echo "Gebruik: smb-shares {create <naam> <pad> <groep>|update <naam> <groep> <read_only> <browseable> <guest_ok>|delete <naam>|list}" >&2
+    echo "Gebruik: smb-shares {create <naam> <pad> <groep>|update <naam> <groep> <read_only> <browseable> <guest_ok> <level2_oplocks> <change_notify>|delete <naam>|list}" >&2
     exit 1
     ;;
 esac
