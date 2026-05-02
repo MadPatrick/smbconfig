@@ -33,10 +33,12 @@ smbconfig/
 ├── api/                # Flask backend
 │   ├── app.py          # API + statische bestanden serveren
 │   └── requirements.txt
-├── scripts/            # Root-scripts voor Samba/Linux beheer
-│   ├── smb-users       # list / create / disable / delete
-│   ├── smb-groups      # list / create / add-member
-│   └── smb-shares      # create / set-acl
+├── scripts/            # Root-scripts voor Samba/Linux/NFS-beheer
+│   ├── smb-users         # list / create / disable / delete
+│   ├── smb-groups        # list / create / add-member
+│   ├── smb-shares        # create / set-acl
+│   ├── smb-globalconfig  # update (globale Samba-instellingen)
+│   └── nfs-shares        # list / create / update / delete
 └── config/             # Configuratiebestanden
     ├── shares.json
     ├── apache-smb-webadmin.conf  # Optioneel: Apache-proxy
@@ -48,11 +50,13 @@ smbconfig/
 
 ## Scripts
 
-| Script       | Subcommando's                                                          |
-|--------------|------------------------------------------------------------------------|
-| `smb-users`  | `list` · `create <user> <pass>` · `disable <user>` · `delete <user>`  |
-| `smb-groups` | `list` · `create <groep>` · `add-member <user> <groep>`               |
-| `smb-shares` | `create <naam> <pad> <groep>` · `set-acl <pad> <groep> <mode>`        |
+| Script            | Subcommando's                                                               |
+|-------------------|-----------------------------------------------------------------------------|
+| `smb-users`       | `list` · `create <user> <pass>` · `disable <user>` · `delete <user>`       |
+| `smb-groups`      | `list` · `create <groep>` · `add-member <user> <groep>`                    |
+| `smb-shares`      | `create <naam> <pad> <groep>` · `set-acl <pad> <groep> <mode>`             |
+| `smb-globalconfig`| `update '<json>'`                                                           |
+| `nfs-shares`      | `list` · `create <pad> <client> <opties>` · `update <pad> <client> <opties>` · `delete <pad>` |
 
 ---
 
