@@ -301,7 +301,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">Mountpoint</label>
-              <input id="mountPoint" class="form-control" placeholder="/mnt/schijf">
+              <input id="mountPoint" class="form-control" placeholder="/mnt/schijf" list="mountpointSuggestions">
             </div>
             <div class="col-md-2">
               <label class="form-label">Bestandssysteem</label>
@@ -351,8 +351,12 @@
               <div class="modal-body">
                 <input type="hidden" id="editMountUuid">
                 <div class="mb-2">
+                  <label class="form-label">UUID</label>
+                  <input id="editMountUuidDisplay" class="form-control mono" readonly>
+                </div>
+                <div class="mb-2">
                   <label class="form-label">Mountpoint</label>
-                  <input id="editMountPoint" class="form-control" placeholder="/mnt/schijf">
+                  <input id="editMountPoint" class="form-control" placeholder="/mnt/schijf" list="mountpointSuggestions">
                 </div>
                 <div class="mb-2">
                   <label class="form-label">Bestandssysteem</label>
@@ -382,6 +386,8 @@
             </div>
           </div>
         </div>
+
+        <datalist id="mountpointSuggestions"></datalist>
       </section>
 
       <section id="page-config" class="page d-none">

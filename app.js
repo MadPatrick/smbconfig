@@ -478,6 +478,23 @@ function renderMounts() {
         </tr>`;
       }).join("")
     : '<tr><td colspan="6" class="text-muted">Geen mounts geconfigureerd</td></tr>';
+
+  // Populate mountpoint datalist from all known paths: NFS exports, Samba share paths, existing fstab mountpoints
+  const allPaths = [
+    ...(state.nfs || []).map(e => e.path),
+    ...(state.shares || []).map(s => s.path),
+    ...(state.mounts || []).map(m => m.mountpoint),
+  ].filter(Boolean);
+  const uniquePaths = [...new Set(allPaths)].sort();
+  const dl = document.getElementById("mountpointSuggestions");
+  if (dl) {
+    dl.innerHTML = "";
+    uniquePaths.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p;
+      dl.appendChild(opt);
+    });
+  }
 }
 
 function useDiskUuid(uuid, fstype) {
@@ -509,10 +526,12 @@ async function addMount() {
 
 function openEditMount(uuid, mountpoint, fstype, options) {
   document.getElementById("editMountUuid").value = uuid;
+  const display = document.getElementById("editMountUuidDisplay");
+  if (display) display.value = uuid;
   document.getElementById("editMountPoint").value = mountpoint;
   document.getElementById("editMountOptions").value = options;
-  const sel = document.getElementById("editMountFstype");
-  if ([...sel.options].some(o => o.value === fstype)) sel.value = fstype;
+  const fsSel = document.getElementById("editMountFstype");
+  if ([...fsSel.options].some(o => o.value === fstype)) fsSel.value = fstype;
   new bootstrap.Modal(document.getElementById("editMountModal")).show();
 }
 
