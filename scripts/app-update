@@ -19,8 +19,7 @@ fi
 echo "=== Git pull ==="
 cd "$REPO_DIR"
 git fetch origin
-git checkout main
-git reset --hard origin/main
+git checkout -B main origin/main
 
 echo "=== Bestanden bijwerken ==="
 bash "$REPO_DIR/install.sh" update
