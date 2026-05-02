@@ -479,12 +479,17 @@ function renderMounts() {
       }).join("")
     : '<tr><td colspan="6" class="text-muted">Geen mounts geconfigureerd</td></tr>';
 
-  // Populate mountpoint datalist with NFS share paths
-  const nfsPaths = (state.nfs || []).map(e => e.path).filter(Boolean);
+  // Populate mountpoint datalist from all known paths: NFS exports, Samba share paths, existing fstab mountpoints
+  const allPaths = [
+    ...(state.nfs || []).map(e => e.path),
+    ...(state.shares || []).map(s => s.path),
+    ...(state.mounts || []).map(m => m.mountpoint),
+  ].filter(Boolean);
+  const uniquePaths = [...new Set(allPaths)].sort();
   const dl = document.getElementById("mountpointSuggestions");
   if (dl) {
     dl.innerHTML = "";
-    nfsPaths.forEach(p => {
+    uniquePaths.forEach(p => {
       const opt = document.createElement("option");
       opt.value = p;
       dl.appendChild(opt);
