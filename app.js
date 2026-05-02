@@ -479,6 +479,25 @@ function renderMounts() {
       }).join("")
     : '<tr><td colspan="6" class="text-muted">Geen mounts geconfigureerd</td></tr>';
 
+  // Populate UUID dropdown with available (not yet in fstab) disk UUIDs
+  const mountedUuids = new Set((state.mounts || []).map(m => m.uuid).filter(Boolean));
+  const uuidSel = document.getElementById("mountUuid");
+  if (uuidSel) {
+    const currentVal = uuidSel.value;
+    uuidSel.innerHTML = '<option value="">— Selecteer UUID —</option>';
+    (state.disks || [])
+      .filter(d => d.uuid && !mountedUuids.has(d.uuid))
+      .forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.uuid;
+        const label = [d.uuid, d.name, d.label, d.fstype, d.size]
+          .filter(Boolean).join(" · ");
+        opt.textContent = label;
+        uuidSel.appendChild(opt);
+      });
+    if ([...uuidSel.options].some(o => o.value === currentVal)) uuidSel.value = currentVal;
+  }
+
   // Populate mountpoint datalist from all known paths: NFS exports, Samba share paths, existing fstab mountpoints
   const allPaths = [
     ...(state.nfs || []).map(e => e.path),
@@ -497,15 +516,29 @@ function renderMounts() {
   }
 }
 
-function useDiskUuid(uuid, fstype) {
-  document.getElementById("mountUuid").value = uuid;
-  if (fstype) {
+function onMountUuidChange() {
+  const uuidSel = document.getElementById("mountUuid");
+  const uuid = uuidSel ? uuidSel.value : "";
+  if (!uuid) return;
+  const disk = (state.disks || []).find(d => d.uuid === uuid);
+  if (disk && disk.fstype) {
     const sel = document.getElementById("mountFstype");
-    if ([...sel.options].some(o => o.value === fstype)) sel.value = fstype;
+    if (sel && [...sel.options].some(o => o.value === disk.fstype)) sel.value = disk.fstype;
+  }
+}
+
+function useDiskUuid(uuid, fstype) {
+  const sel = document.getElementById("mountUuid");
+  if (sel && [...sel.options].some(o => o.value === uuid)) {
+    sel.value = uuid;
+  }
+  if (fstype) {
+    const fsSel = document.getElementById("mountFstype");
+    if (fsSel && [...fsSel.options].some(o => o.value === fstype)) fsSel.value = fstype;
   }
   const btn = document.querySelector('[data-page="mounts"]');
   if (btn) btn.click();
-  document.getElementById("mountUuid").focus();
+  if (sel) sel.focus();
 }
 
 async function addMount() {

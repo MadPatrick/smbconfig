@@ -297,7 +297,9 @@
           <div class="row g-2">
             <div class="col-md-3">
               <label class="form-label">UUID</label>
-              <input id="mountUuid" class="form-control mono" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+              <select id="mountUuid" class="form-select mono" onchange="onMountUuidChange()">
+                <option value="">— Selecteer UUID —</option>
+              </select>
             </div>
             <div class="col-md-3">
               <label class="form-label">Mountpoint</label>
@@ -327,7 +329,7 @@
               <button class="btn btn-success w-100" onclick="addMount()">Toevoegen</button>
             </div>
           </div>
-          <div class="form-text">Klik op "Gebruik UUID" in de schijventabel om de UUID automatisch in te vullen. De mount wordt direct actief en bij elke herstart opnieuw gekoppeld.</div>
+          <div class="form-text">Selecteer een UUID uit het dropdown menu of klik op "Gebruik UUID" in de schijventabel. De mount wordt direct actief en bij elke herstart opnieuw gekoppeld.</div>
         </div>
 
         <div class="card p-3">
