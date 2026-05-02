@@ -32,9 +32,9 @@ fi
 echo "=== SMB WebAdmin installatie ==="
 
 # 1. Benodigde pakketten installeren
-echo "→ Pakketten installeren (samba, python3, acl, jq)..."
+echo "→ Pakketten installeren (samba, nfs-kernel-server, python3, acl, jq)..."
 apt-get update -q
-apt-get install -y -q samba python3 python3-venv acl jq
+apt-get install -y -q samba nfs-kernel-server python3 python3-venv acl jq
 
 # 2. Bestanden kopiëren
 echo "→ Bestanden kopiëren naar $INSTALL_DIR..."
@@ -64,6 +64,7 @@ echo "→ Service instellen en starten..."
 cp "$INSTALL_DIR/config/smb-webadmin.service" /etc/systemd/system/smb-webadmin.service
 systemctl daemon-reload
 systemctl enable --now smb-webadmin
+systemctl enable --now nfs-kernel-server
 
 # 6. Toegangs-URL tonen
 IP=$(hostname -I | awk "{print \$1}")

@@ -72,10 +72,56 @@ sudo bash install.sh update
 
 Het update-commando:
 - vervangt de applicatiebestanden in `/opt/smbadmin/` door de nieuwste versie
-- past de bestandsrechten opnieuw toe
+- past de bestandsrechten en sudoers-configuratie opnieuw toe
 - herstart de `smb-webadmin` service automatisch
 
-> **Let op:** de sudoers-configuratie en de systemd-service worden bij een update **niet** aangepast. Voer een volledige herinstallatie uit als die bestanden zijn gewijzigd.
+---
+
+## NFS-shares (Hikvision-camera's)
+
+`install.sh` installeert en start `nfs-kernel-server` automatisch. Via de NFS-tab in de webinterface kun je daarna exports toevoegen, bewerken en verwijderen. De app maakt de map aan en stelt automatisch de juiste rechten in (`chown nobody:nogroup` + `chmod 777`).
+
+**Veelgebruikte opties voor Hikvision-camera's:**
+
+| Optie               | Betekenis                                               |
+|---------------------|---------------------------------------------------------|
+| `rw`                | Schrijf- en leesrechten                                 |
+| `sync`              | Schrijfacties direct naar schijf (veiliger)             |
+| `no_subtree_check`  | Minder overhead, aanbevolen voor grote exports          |
+| `no_root_squash`    | Camera's schrijven als root op de server                |
+
+**Voorbeeld (vier camera's op `/media/disk3`):**
+
+| Pad                  | Client           | Opties                                      |
+|----------------------|------------------|---------------------------------------------|
+| `/media/disk3/cam1`  | `192.168.1.0/24` | `rw,sync,no_subtree_check,no_root_squash`   |
+| `/media/disk3/cam2`  | `192.168.1.0/24` | `rw,sync,no_subtree_check,no_root_squash`   |
+
+**Wat de app niet doet (handmatig instellen):**
+
+- **Schijf koppelen via fstab** – gebruik `sudo blkid` om de UUID op te vragen en voeg de schijf toe aan `/etc/fstab`, daarna `sudo mount -a`.
+- **Firewall (ufw)** – sta NFS-verkeer toe vanuit jouw netwerk:
+  ```bash
+  sudo ufw allow from 192.168.1.0/24 to any port nfs
+  sudo ufw allow 111/tcp
+  sudo ufw allow 111/udp
+  ```
+
+**Hikvision-camera instellen:**
+
+1. Ga naar *Configuration → Storage → Storage Management → NetHDD*
+2. Stel in: **Type** NFS · **IP** van de server · **Path** bijv. `/media/disk3/cam1`
+3. Klik op **Test** en daarna **Save**
+4. Ga naar *HDD Management*, selecteer de NetHDD en klik **Format**
+
+**Controlecommando's:**
+
+```bash
+sudo exportfs -v          # Toon actieve NFS-exports
+sudo exportfs -ra         # Herlaad /etc/exports
+sudo systemctl status nfs-kernel-server
+df -h                     # Controleer schijfgebruik
+```
 
 ---
 

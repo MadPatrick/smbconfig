@@ -87,6 +87,8 @@ PY
     fi
 
     mkdir -p "$NFS_PATH"
+    chown nobody:nogroup "$NFS_PATH"
+    chmod 777 "$NFS_PATH"
 
     touch "$EXPORTS_FILE"
     printf '\n%s\t%s(%s)\n' "$NFS_PATH" "$NFS_CLIENT" "$NFS_OPTIONS" >> "$EXPORTS_FILE"
