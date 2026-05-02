@@ -11,6 +11,11 @@ app = Flask(__name__, static_folder=str(BASE_DIR), static_url_path="")
 
 SAFE_NAME = re.compile(r"^[a-zA-Z0-9._-]{1,32}$")
 SAFE_PATH = re.compile(r"^/[a-zA-Z0-9._/\-]{1,240}$")
+SAFE_NFS_CLIENT = re.compile(r"^(\*|[a-zA-Z0-9.*/:_-]{1,128})$")
+SAFE_NFS_OPTIONS = re.compile(r"^[a-zA-Z0-9,=_]{1,256}$")
+SAFE_UUID = re.compile(r"^[0-9a-fA-F-]{1,36}$")
+SAFE_FSTYPE = re.compile(r"^(ext2|ext3|ext4|xfs|btrfs|vfat|exfat|ntfs|ntfs-3g|f2fs|jfs|reiserfs|tmpfs|nfs|nfs4|cifs|auto)$")
+SAFE_MOUNT_OPTIONS = re.compile(r"^[a-zA-Z0-9,=_.@-]{1,256}$")
 
 def validate_name(value, field="naam"):
     if not value or not SAFE_NAME.match(value):
@@ -256,6 +261,99 @@ def update_share(sharename):
 def delete_share(sharename):
     sharename = validate_name(sharename, "share naam")
     run_script("smb-shares", "delete", sharename)
+    return jsonify({"ok": True})
+
+def validate_nfs_client(value):
+    if not value or not SAFE_NFS_CLIENT.match(value):
+        raise ValueError("Ongeldige NFS client")
+    return value
+
+def validate_nfs_options(value):
+    if not value or not SAFE_NFS_OPTIONS.match(value):
+        raise ValueError("Ongeldige NFS opties")
+    return value
+
+@app.get("/api/nfs")
+def list_nfs():
+    return jsonify(json.loads(run_script("nfs-shares", "list")))
+
+@app.post("/api/nfs")
+def create_nfs():
+    data = request.json or {}
+    path = validate_path(data.get("path"))
+    client = validate_nfs_client(data.get("client", "*"))
+    options = validate_nfs_options(data.get("options", "rw,sync,no_subtree_check"))
+    existing = json.loads(run_script("nfs-shares", "list"))
+    if any(e["path"] == path for e in existing):
+        raise ValueError("Export bestaat al")
+    run_script("nfs-shares", "create", path, client, options)
+    return jsonify({"ok": True})
+
+@app.post("/api/nfs/update")
+def update_nfs():
+    data = request.json or {}
+    path = validate_path(data.get("path"))
+    client = validate_nfs_client(data.get("client", "*"))
+    options = validate_nfs_options(data.get("options", "rw,sync,no_subtree_check"))
+    existing = json.loads(run_script("nfs-shares", "list"))
+    if not any(e["path"] == path for e in existing):
+        raise ValueError("Export niet gevonden")
+    run_script("nfs-shares", "update", path, client, options)
+    return jsonify({"ok": True})
+
+@app.delete("/api/nfs/<path:nfspath>")
+def delete_nfs(nfspath):
+    path = validate_path("/" + nfspath)
+    run_script("nfs-shares", "delete", path)
+    return jsonify({"ok": True})
+
+def validate_uuid(value):
+    if not value or not SAFE_UUID.match(value):
+        raise ValueError("Ongeldige UUID")
+    return value
+
+def validate_fstype(value):
+    if not value or not SAFE_FSTYPE.match(value):
+        raise ValueError("Ongeldig bestandssysteem")
+    return value
+
+def validate_mount_options(value):
+    if not value or not SAFE_MOUNT_OPTIONS.match(value):
+        raise ValueError("Ongeldige mount opties")
+    return value
+
+@app.get("/api/mounts")
+def list_mounts():
+    return jsonify(json.loads(run_script("disk-mounts", "list")))
+
+@app.get("/api/mounts/disks")
+def list_disks():
+    return jsonify(json.loads(run_script("disk-mounts", "list-disks")))
+
+@app.post("/api/mounts")
+def add_mount():
+    data = request.json or {}
+    uuid = validate_uuid(data.get("uuid", ""))
+    mountpoint = validate_path(data.get("mountpoint", ""))
+    fstype = validate_fstype(data.get("fstype", ""))
+    options = validate_mount_options(data.get("options", "defaults"))
+    run_script("disk-mounts", "add", uuid, mountpoint, fstype, options)
+    return jsonify({"ok": True})
+
+@app.post("/api/mounts/update")
+def update_mount():
+    data = request.json or {}
+    uuid = validate_uuid(data.get("uuid", ""))
+    mountpoint = validate_path(data.get("mountpoint", ""))
+    fstype = validate_fstype(data.get("fstype", ""))
+    options = validate_mount_options(data.get("options", "defaults"))
+    run_script("disk-mounts", "update", uuid, mountpoint, fstype, options)
+    return jsonify({"ok": True})
+
+@app.delete("/api/mounts/<uuid>")
+def remove_mount(uuid):
+    uuid = validate_uuid(uuid)
+    run_script("disk-mounts", "remove", uuid)
     return jsonify({"ok": True})
 
 if __name__ == "__main__":

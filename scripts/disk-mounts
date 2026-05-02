@@ -1,0 +1,270 @@
+#!/bin/bash
+# SMB WebAdmin – schijf- en mountbeheer
+# Gebruik:
+#   disk-mounts list
+#   disk-mounts list-disks
+#   disk-mounts add <uuid> <mountpoint> <fstype> <options>
+#   disk-mounts update <uuid> <mountpoint> <fstype> <options>
+#   disk-mounts remove <uuid>
+set -euo pipefail
+
+CMD="${1:-}"
+FSTAB="/etc/fstab"
+SAFE_UUID='^[0-9a-fA-F-]{1,36}$'
+SAFE_PATH='^/[a-zA-Z0-9._/\-]{1,240}$'
+SAFE_FSTYPE='^(ext2|ext3|ext4|xfs|btrfs|vfat|exfat|ntfs|ntfs-3g|f2fs|jfs|reiserfs|tmpfs|nfs|nfs4|cifs|auto)$'
+SAFE_OPTIONS='^[a-zA-Z0-9,=_.@-]{1,256}$'
+
+validate_uuid() {
+  if ! [[ "${1:-}" =~ $SAFE_UUID ]]; then
+    echo "Ongeldige UUID: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+validate_path() {
+  if ! [[ "${1:-}" =~ $SAFE_PATH ]] || [[ "${1:-}" == *".."* ]]; then
+    echo "Ongeldig pad: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+validate_fstype() {
+  if ! [[ "${1:-}" =~ $SAFE_FSTYPE ]]; then
+    echo "Ongeldig bestandssysteem: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+validate_options() {
+  if ! [[ "${1:-}" =~ $SAFE_OPTIONS ]]; then
+    echo "Ongeldige opties: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+case "$CMD" in
+  list)
+    python3 - <<'PY'
+import json, os, subprocess
+
+FSTAB = "/etc/fstab"
+
+# Build UUID -> device map from blkid
+uuid_to_dev = {}
+dev_to_uuid = {}
+try:
+    out = subprocess.run(["blkid", "-o", "export"], capture_output=True, text=True, timeout=10)
+    current = {}
+    for line in out.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            if current.get("UUID") and current.get("DEVNAME"):
+                uuid_to_dev[current["UUID"]] = current["DEVNAME"]
+                dev_to_uuid[current["DEVNAME"]] = current["UUID"]
+            current = {}
+        elif "=" in line:
+            k, _, v = line.partition("=")
+            current[k] = v
+    if current.get("UUID") and current.get("DEVNAME"):
+        uuid_to_dev[current["UUID"]] = current["DEVNAME"]
+        dev_to_uuid[current["DEVNAME"]] = current["UUID"]
+except Exception:
+    pass
+
+# Parse fstab
+fstab_entries = []
+if os.path.exists(FSTAB):
+    with open(FSTAB, errors="replace") as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            parts = stripped.split()
+            if len(parts) < 4:
+                continue
+            spec = parts[0]
+            mountpoint = parts[1]
+            fstype = parts[2]
+            options = parts[3]
+            dump = parts[4] if len(parts) > 4 else "0"
+            passno = parts[5] if len(parts) > 5 else "0"
+
+            uuid = ""
+            device = ""
+            if spec.startswith("UUID="):
+                uuid = spec[5:]
+                device = uuid_to_dev.get(uuid, "")
+            else:
+                device = spec
+                uuid = dev_to_uuid.get(spec, "")
+
+            fstab_entries.append({
+                "spec": spec,
+                "uuid": uuid,
+                "device": device,
+                "mountpoint": mountpoint,
+                "fstype": fstype,
+                "options": options,
+                "dump": dump,
+                "passno": passno,
+                "auto": "noauto" not in options.split(","),
+            })
+
+print(json.dumps(fstab_entries))
+PY
+    ;;
+
+  list-disks)
+    python3 - <<'PY'
+import json, subprocess
+
+result = []
+try:
+    out = subprocess.run(
+        ["lsblk", "-J", "-o", "NAME,UUID,FSTYPE,SIZE,LABEL,MOUNTPOINT,TYPE"],
+        capture_output=True, text=True, timeout=10
+    )
+    if out.returncode == 0:
+        data = json.loads(out.stdout)
+        def flatten(devices, parent=""):
+            for dev in (devices or []):
+                devname = "/dev/" + dev.get("name", "")
+                entry = {
+                    "name": devname,
+                    "uuid": dev.get("uuid") or "",
+                    "fstype": dev.get("fstype") or "",
+                    "size": dev.get("size") or "",
+                    "label": dev.get("label") or "",
+                    "mountpoint": dev.get("mountpoint") or "",
+                    "type": dev.get("type") or "",
+                }
+                result.append(entry)
+                flatten(dev.get("children"), devname)
+        flatten(data.get("blockdevices", []))
+except Exception:
+    pass
+
+print(json.dumps(result))
+PY
+    ;;
+
+  add)
+    validate_uuid "${2:-}"
+    validate_path "${3:-}"
+    validate_fstype "${4:-}"
+    validate_options "${5:-}"
+    UUID="$2"
+    MOUNTPOINT="$3"
+    FSTYPE="$4"
+    OPTIONS="$5"
+
+    # Check UUID is known to blkid
+    if ! blkid -U "$UUID" >/dev/null 2>&1; then
+      echo "UUID niet gevonden: $UUID" >&2
+      exit 1
+    fi
+
+    # Check no duplicate entry in fstab
+    if grep -qE "^[[:space:]]*UUID=${UUID}([[:space:]]|$)" "$FSTAB" 2>/dev/null; then
+      echo "UUID staat al in fstab: $UUID" >&2
+      exit 1
+    fi
+    if grep -qE "^[[:space:]]*[^#][^[:space:]]+[[:space:]]+${MOUNTPOINT}[[:space:]]" "$FSTAB" 2>/dev/null; then
+      echo "Mountpoint staat al in fstab: $MOUNTPOINT" >&2
+      exit 1
+    fi
+
+    mkdir -p "$MOUNTPOINT"
+    printf '\nUUID=%s\t%s\t%s\t%s\t0 2\n' "$UUID" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" >> "$FSTAB"
+    mount -a 2>/dev/null || true
+    ;;
+
+  update)
+    validate_uuid "${2:-}"
+    validate_path "${3:-}"
+    validate_fstype "${4:-}"
+    validate_options "${5:-}"
+    UUID="$2"
+    MOUNTPOINT="$3"
+    FSTYPE="$4"
+    OPTIONS="$5"
+
+    python3 - "$UUID" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" <<'PY'
+import sys
+from pathlib import Path
+
+uuid = sys.argv[1]
+mountpoint = sys.argv[2]
+fstype = sys.argv[3]
+options = sys.argv[4]
+fstab = Path("/etc/fstab")
+
+if not fstab.exists():
+    print("/etc/fstab niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = fstab.read_text(errors="replace").splitlines(keepends=True)
+result = []
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped and not stripped.startswith("#"):
+        parts = stripped.split()
+        if parts and parts[0] == f"UUID={uuid}":
+            found = True
+            dump = parts[4] if len(parts) > 4 else "0"
+            passno = parts[5] if len(parts) > 5 else "2"
+            result.append(f"UUID={uuid}\t{mountpoint}\t{fstype}\t{options}\t{dump} {passno}\n")
+            continue
+    result.append(line)
+
+if not found:
+    print(f"UUID niet gevonden in fstab: {uuid}", file=sys.stderr)
+    sys.exit(1)
+
+fstab.write_text("".join(result))
+PY
+    mount -a 2>/dev/null || true
+    ;;
+
+  remove)
+    validate_uuid "${2:-}"
+    UUID="$2"
+
+    python3 - "$UUID" <<'PY'
+import sys
+from pathlib import Path
+
+uuid = sys.argv[1]
+fstab = Path("/etc/fstab")
+
+if not fstab.exists():
+    print("/etc/fstab niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = fstab.read_text(errors="replace").splitlines(keepends=True)
+result = []
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped and not stripped.startswith("#"):
+        parts = stripped.split()
+        if parts and parts[0] == f"UUID={uuid}":
+            found = True
+            continue
+    result.append(line)
+
+if not found:
+    print(f"UUID niet gevonden in fstab: {uuid}", file=sys.stderr)
+    sys.exit(1)
+
+fstab.write_text("".join(result).rstrip("\n") + "\n")
+PY
+    ;;
+
+  *)
+    echo "Gebruik: disk-mounts {list|list-disks|add <uuid> <mountpoint> <fstype> <options>|update <uuid> <mountpoint> <fstype> <options>|remove <uuid>}" >&2
+    exit 1
+    ;;
+esac

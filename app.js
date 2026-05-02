@@ -4,6 +4,7 @@ let state = {
   users: [],
   groups: [],
   shares: [],
+  nfs: [],
   smbconfig: {},
   sysinfo: {}
 };
@@ -114,7 +115,6 @@ function render() {
   document.getElementById("statUsers").innerText = state.users.length;
   document.getElementById("statGroups").innerText = state.groups.length;
   document.getElementById("statShares").innerText = state.shares.length;
-
   const cfg = state.smbconfig || {};
   document.getElementById("cfgNetbiosName").innerText = cfg["netbios name"] || "-";
   document.getElementById("cfgWorkgroup").innerText = cfg["workgroup"] || "-";
@@ -194,6 +194,20 @@ function render() {
   const shareGroupEl = document.getElementById("shareGroup");
   shareGroupEl.innerHTML = `<option value="none">-- geen groep --</option>` +
     state.groups.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join("");
+
+  document.getElementById("nfsTable").innerHTML = (state.nfs || []).map(e => {
+    const ep = escapeHtml(e.path);
+    const eid = btoa(e.path);
+    return `
+    <tr>
+      <td class="mono">${ep}</td>
+      <td><input type="text" class="form-control form-control-sm" id="nc-${eid}" value="${escapeHtml(e.client)}"></td>
+      <td><input type="text" class="form-control form-control-sm" id="no-${eid}" value="${escapeHtml(e.options)}"></td>
+      <td>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteNfsExport('${ep}')">Verwijderen</button>
+      </td>
+    </tr>`;
+  }).join("");
 }
 
 function fillSelect(id, values) {
@@ -203,17 +217,19 @@ function fillSelect(id, values) {
 
 async function loadAll() {
   try {
-    const [stateData, smbconfig, interfaces, sysinfo] = await Promise.all([
+    const [stateData, smbconfig, interfaces, sysinfo, nfs] = await Promise.all([
       api("GET", "/state"),
       api("GET", "/smbconfig"),
       api("GET", "/interfaces"),
-      api("GET", "/sysinfo")
+      api("GET", "/sysinfo"),
+      api("GET", "/nfs")
     ]);
-    state = { ...stateData, smbconfig, interfaces, sysinfo };
+    state = { ...stateData, smbconfig, interfaces, sysinfo, nfs };
     render();
   } catch (e) {
     alertMsg("danger", "Kan gegevens niet laden: " + e.message);
   }
+  await loadMounts();
 }
 
 async function createUser() {
@@ -354,6 +370,171 @@ async function saveSmbConfig() {
     await api("POST", "/smbconfig", data);
     alertMsg("success", "Configuratie opgeslagen");
     await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function createNfsExport() {
+  try {
+    const path = validatePath(document.getElementById("nfsPath").value);
+    const client = document.getElementById("nfsClient").value.trim() || "*";
+    const options = document.getElementById("nfsOptions").value.trim() || "rw,sync,no_subtree_check";
+    await api("POST", "/nfs", { path, client, options });
+    document.getElementById("nfsPath").value = "";
+    document.getElementById("nfsClient").value = "";
+    document.getElementById("nfsOptions").value = "";
+    alertMsg("success", "NFS export aangemaakt");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function updateNfsExport(path, silent = false) {
+  try {
+    validatePath(path);
+    const eid = btoa(path);
+    const client = document.getElementById("nc-" + eid).value.trim();
+    const options = document.getElementById("no-" + eid).value.trim();
+    await api("POST", "/nfs/update", { path, client, options });
+    if (!silent) {
+      alertMsg("success", `NFS export ${escapeHtml(path)} opgeslagen`);
+      await loadAll();
+    }
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function updateAllNfsExports() {
+  try {
+    await Promise.all((state.nfs || []).map(e => updateNfsExport(e.path, true)));
+    alertMsg("success", "Alle NFS exports opgeslagen");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function deleteNfsExport(path) {
+  if (!confirm(`NFS export ${path} verwijderen? De map op schijf blijft bewaard.`)) return;
+  try {
+    await api("DELETE", `/nfs/${path.slice(1)}`);
+    alertMsg("success", "NFS export verwijderd");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function loadMounts() {
+  try {
+    const [mounts, disks] = await Promise.all([
+      api("GET", "/mounts"),
+      api("GET", "/mounts/disks")
+    ]);
+    state.mounts = mounts;
+    state.disks = disks;
+    renderMounts();
+  } catch (e) {
+    alertMsg("danger", "Kan schijfgegevens niet laden: " + e.message);
+  }
+}
+
+function renderMounts() {
+  const disks = state.disks || [];
+  document.getElementById("disksTable").innerHTML = disks.length
+    ? disks.map(d => {
+        const hasUuid = !!d.uuid;
+        const btnUse = hasUuid
+          ? `<button class="btn btn-sm btn-outline-primary" onclick="useDiskUuid('${escapeHtml(d.uuid)}','${escapeHtml(d.fstype)}')">Gebruik UUID</button>`
+          : `<span class="text-muted">-</span>`;
+        return `<tr>
+          <td class="mono">${escapeHtml(d.name)}</td>
+          <td><span class="badge bg-secondary">${escapeHtml(d.type)}</span></td>
+          <td class="mono">${escapeHtml(d.uuid) || '<span class="text-muted">-</span>'}</td>
+          <td>${escapeHtml(d.fstype) || '<span class="text-muted">-</span>'}</td>
+          <td>${escapeHtml(d.size)}</td>
+          <td>${escapeHtml(d.label) || '<span class="text-muted">-</span>'}</td>
+          <td class="mono">${escapeHtml(d.mountpoint) || '<span class="text-muted">-</span>'}</td>
+          <td>${btnUse}</td>
+        </tr>`;
+      }).join("")
+    : '<tr><td colspan="8" class="text-muted">Geen schijven gevonden</td></tr>';
+
+  const mounts = state.mounts || [];
+  document.getElementById("mountsTable").innerHTML = mounts.length
+    ? mounts.map(m => {
+        const uuid = escapeHtml(m.uuid);
+        const spec = escapeHtml(m.spec);
+        const display = m.uuid ? `<span class="mono">${uuid}</span>` : `<span class="mono">${spec}</span>`;
+        const autoBadge = m.auto
+          ? '<span class="badge bg-success">ja</span>'
+          : '<span class="badge bg-secondary">nee</span>';
+        const editBtn = m.uuid
+          ? `<button class="btn btn-sm btn-outline-secondary" onclick="openEditMount('${uuid}','${escapeHtml(m.mountpoint)}','${escapeHtml(m.fstype)}','${escapeHtml(m.options)}')">Bewerken</button> `
+          : "";
+        const delBtn = m.uuid
+          ? `<button class="btn btn-sm btn-outline-danger" onclick="removeMount('${uuid}')">Verwijderen</button>`
+          : "";
+        return `<tr>
+          <td>${display}</td>
+          <td class="mono">${escapeHtml(m.mountpoint)}</td>
+          <td>${escapeHtml(m.fstype)}</td>
+          <td class="mono">${escapeHtml(m.options)}</td>
+          <td>${autoBadge}</td>
+          <td>${editBtn}${delBtn}</td>
+        </tr>`;
+      }).join("")
+    : '<tr><td colspan="6" class="text-muted">Geen mounts geconfigureerd</td></tr>';
+}
+
+function useDiskUuid(uuid, fstype) {
+  document.getElementById("mountUuid").value = uuid;
+  if (fstype) {
+    const sel = document.getElementById("mountFstype");
+    if ([...sel.options].some(o => o.value === fstype)) sel.value = fstype;
+  }
+  const btn = document.querySelector('[data-page="mounts"]');
+  if (btn) btn.click();
+  document.getElementById("mountUuid").focus();
+}
+
+async function addMount() {
+  try {
+    const uuid = document.getElementById("mountUuid").value.trim();
+    if (!uuid) throw new Error("UUID is verplicht");
+    const mountpoint = validatePath(document.getElementById("mountPoint").value.trim());
+    const fstype = document.getElementById("mountFstype").value;
+    const options = document.getElementById("mountOptions").value.trim() || "defaults";
+    await api("POST", "/mounts", { uuid, mountpoint, fstype, options });
+    document.getElementById("mountUuid").value = "";
+    document.getElementById("mountPoint").value = "";
+    document.getElementById("mountOptions").value = "defaults";
+    alertMsg("success", "Mount toegevoegd aan fstab");
+    await loadMounts();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+function openEditMount(uuid, mountpoint, fstype, options) {
+  document.getElementById("editMountUuid").value = uuid;
+  document.getElementById("editMountPoint").value = mountpoint;
+  document.getElementById("editMountOptions").value = options;
+  const sel = document.getElementById("editMountFstype");
+  if ([...sel.options].some(o => o.value === fstype)) sel.value = fstype;
+  new bootstrap.Modal(document.getElementById("editMountModal")).show();
+}
+
+async function saveEditMount() {
+  try {
+    const uuid = document.getElementById("editMountUuid").value;
+    const mountpoint = validatePath(document.getElementById("editMountPoint").value.trim());
+    const fstype = document.getElementById("editMountFstype").value;
+    const options = document.getElementById("editMountOptions").value.trim() || "defaults";
+    await api("POST", "/mounts/update", { uuid, mountpoint, fstype, options });
+    bootstrap.Modal.getInstance(document.getElementById("editMountModal")).hide();
+    alertMsg("success", "Mount bijgewerkt");
+    await loadMounts();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function removeMount(uuid) {
+  if (!confirm(`Mount met UUID ${uuid} verwijderen uit fstab?`)) return;
+  try {
+    await api("DELETE", `/mounts/${encodeURIComponent(uuid)}`);
+    alertMsg("success", "Mount verwijderd uit fstab");
+    await loadMounts();
   } catch (e) { alertMsg("danger", e.message); }
 }
 

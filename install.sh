@@ -16,11 +16,14 @@ if [[ "${1:-}" == "update" ]]; then
   echo "=== SMB WebAdmin update ==="
   echo "→ Bestanden bijwerken in $INSTALL_DIR..."
   cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" "$SCRIPT_DIR/favicon.ico" \
-        "$SCRIPT_DIR/logo.svg" "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" \
+        "$SCRIPT_DIR/logo.svg" "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/config" \
         "$INSTALL_DIR/"
   chown -R root:www-data "$INSTALL_DIR/api" "$INSTALL_DIR/scripts"
   chmod -R 750 "$INSTALL_DIR/scripts/"* "$INSTALL_DIR/api"
   chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js" "$INSTALL_DIR/favicon.ico" "$INSTALL_DIR/logo.svg"
+  visudo -cf "$INSTALL_DIR/config/sudoers-smb-webadmin"
+  cp "$INSTALL_DIR/config/sudoers-smb-webadmin" /etc/sudoers.d/smb-webadmin
+  chmod 440 /etc/sudoers.d/smb-webadmin
   systemctl restart smb-webadmin
   echo "✓ Update klaar – service herstart."
   exit 0
@@ -29,9 +32,9 @@ fi
 echo "=== SMB WebAdmin installatie ==="
 
 # 1. Benodigde pakketten installeren
-echo "→ Pakketten installeren (samba, python3, acl, jq)..."
+echo "→ Pakketten installeren (samba, nfs-kernel-server, python3, acl, jq)..."
 apt-get update -q
-apt-get install -y -q samba python3 python3-venv acl jq
+apt-get install -y -q samba nfs-kernel-server python3 python3-venv acl jq
 
 # 2. Bestanden kopiëren
 echo "→ Bestanden kopiëren naar $INSTALL_DIR..."
@@ -61,6 +64,7 @@ echo "→ Service instellen en starten..."
 cp "$INSTALL_DIR/config/smb-webadmin.service" /etc/systemd/system/smb-webadmin.service
 systemctl daemon-reload
 systemctl enable --now smb-webadmin
+systemctl enable --now nfs-kernel-server
 
 # 6. Toegangs-URL tonen
 IP=$(hostname -I | awk "{print \$1}")

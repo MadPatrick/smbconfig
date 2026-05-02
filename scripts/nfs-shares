@@ -1,0 +1,181 @@
+#!/bin/bash
+# SMB WebAdmin – NFS exportbeheer
+# Gebruik:
+#   nfs-shares list
+#   nfs-shares create <pad> <client> <opties>
+#   nfs-shares update <pad> <client> <opties>
+#   nfs-shares delete <pad>
+set -euo pipefail
+
+CMD="${1:-}"
+EXPORTS_FILE="/etc/exports"
+SAFE_PATH='^/[a-zA-Z0-9._/\-]{1,240}$'
+SAFE_CLIENT='^(\*|[a-zA-Z0-9.*/:_-]{1,128})$'
+SAFE_OPTIONS='^[a-zA-Z0-9,=_]{1,256}$'
+
+validate_path() {
+  if ! [[ "${1:-}" =~ $SAFE_PATH ]] || [[ "${1:-}" == *".."* ]]; then
+    echo "Ongeldig pad: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+validate_client() {
+  if ! [[ "${1:-}" =~ $SAFE_CLIENT ]]; then
+    echo "Ongeldige client: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+validate_options() {
+  if ! [[ "${1:-}" =~ $SAFE_OPTIONS ]]; then
+    echo "Ongeldige opties: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+reload_nfs() {
+  exportfs -ra 2>/dev/null || true
+}
+
+case "$CMD" in
+  list)
+    python3 - <<'PY'
+import json, re, os
+
+EXPORTS_FILE = "/etc/exports"
+
+result = []
+if os.path.exists(EXPORTS_FILE):
+    with open(EXPORTS_FILE, errors="replace") as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            parts = stripped.split()
+            if not parts:
+                continue
+            path = parts[0]
+            client = ""
+            options = ""
+            if len(parts) >= 2:
+                rest = parts[1]
+                m = re.match(r'^([^(]*)\(([^)]*)\)$', rest)
+                if m:
+                    client = m.group(1) or "*"
+                    options = m.group(2)
+                else:
+                    client = rest
+            result.append({"path": path, "client": client, "options": options})
+
+print(json.dumps(result))
+PY
+    ;;
+
+  create)
+    validate_path "${2:-}"
+    validate_client "${3:-}"
+    validate_options "${4:-}"
+    NFS_PATH="$2"
+    NFS_CLIENT="$3"
+    NFS_OPTIONS="$4"
+
+    # Check if path already exists in exports
+    if grep -qE "^[[:space:]]*${NFS_PATH}([[:space:]]|$)" "$EXPORTS_FILE" 2>/dev/null; then
+      echo "Export bestaat al: $NFS_PATH" >&2
+      exit 1
+    fi
+
+    mkdir -p "$NFS_PATH"
+    chown nobody:nogroup "$NFS_PATH"
+    chmod 777 "$NFS_PATH"
+
+    touch "$EXPORTS_FILE"
+    printf '\n%s\t%s(%s)\n' "$NFS_PATH" "$NFS_CLIENT" "$NFS_OPTIONS" >> "$EXPORTS_FILE"
+    reload_nfs
+    ;;
+
+  update)
+    validate_path "${2:-}"
+    validate_client "${3:-}"
+    validate_options "${4:-}"
+    NFS_PATH="$2"
+    NFS_CLIENT="$3"
+    NFS_OPTIONS="$4"
+
+    python3 - "$NFS_PATH" "$NFS_CLIENT" "$NFS_OPTIONS" <<'PY'
+import sys, re
+from pathlib import Path
+
+path = sys.argv[1]
+client = sys.argv[2]
+options = sys.argv[3]
+exports = Path("/etc/exports")
+
+if not exports.exists():
+    print("/etc/exports niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = exports.read_text(errors="replace").splitlines(keepends=True)
+result = []
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped and not stripped.startswith("#"):
+        parts = stripped.split()
+        if parts and parts[0] == path:
+            found = True
+            result.append(f"{path}\t{client}({options})\n")
+            continue
+    result.append(line)
+
+if not found:
+    print(f"Export niet gevonden: {path}", file=sys.stderr)
+    sys.exit(1)
+
+exports.write_text("".join(result))
+PY
+    reload_nfs
+    ;;
+
+  delete)
+    validate_path "${2:-}"
+    NFS_PATH="$2"
+
+    python3 - "$NFS_PATH" <<'PY'
+import sys
+from pathlib import Path
+
+path = sys.argv[1]
+exports = Path("/etc/exports")
+
+if not exports.exists():
+    print("/etc/exports niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = exports.read_text(errors="replace").splitlines(keepends=True)
+result = []
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped and not stripped.startswith("#"):
+        parts = stripped.split()
+        if parts and parts[0] == path:
+            found = True
+            continue
+    result.append(line)
+
+if not found:
+    print(f"Export niet gevonden: {path}", file=sys.stderr)
+    sys.exit(1)
+
+exports.write_text("".join(result).rstrip("\n") + "\n")
+PY
+    reload_nfs
+    ;;
+
+  *)
+    echo "Gebruik: nfs-shares {list|create <pad> <client> <opties>|update <pad> <client> <opties>|delete <pad>}" >&2
+    exit 1
+    ;;
+esac
