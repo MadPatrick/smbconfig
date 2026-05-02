@@ -18,6 +18,7 @@ if [[ "${1:-}" == "update" ]]; then
   cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" "$SCRIPT_DIR/favicon.ico" \
         "$SCRIPT_DIR/logo.svg" "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/config" \
         "$INSTALL_DIR/"
+  echo "$SCRIPT_DIR" > "$INSTALL_DIR/config/git-repo-path"
   chown -R root:www-data "$INSTALL_DIR/api" "$INSTALL_DIR/scripts"
   chmod -R 750 "$INSTALL_DIR/scripts/"* "$INSTALL_DIR/api"
   chmod 644 "$INSTALL_DIR/index.html" "$INSTALL_DIR/app.js" "$INSTALL_DIR/favicon.ico" "$INSTALL_DIR/logo.svg"
@@ -42,6 +43,7 @@ mkdir -p "$INSTALL_DIR"
 cp -r "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/app.js" "$SCRIPT_DIR/favicon.ico" \
       "$SCRIPT_DIR/logo.svg" "$SCRIPT_DIR/api" "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/config" \
       "$INSTALL_DIR/"
+echo "$SCRIPT_DIR" > "$INSTALL_DIR/config/git-repo-path"
 
 chown -R root:www-data "$INSTALL_DIR"
 chmod -R 750 "$INSTALL_DIR"

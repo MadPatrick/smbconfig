@@ -356,6 +356,11 @@ def update_mount():
     run_script("disk-mounts", "update", uuid, mountpoint, fstype, options)
     return jsonify({"ok": True})
 
+@app.post("/api/update")
+def do_update():
+    output = run_script("app-update")
+    return jsonify({"ok": True, "output": output})
+
 @app.delete("/api/mounts/<uuid>")
 def remove_mount(uuid):
     uuid = validate_uuid(uuid)
