@@ -182,25 +182,22 @@ PY
 
   update)
     validate_uuid "${2:-}"
-    validate_uuid "${3:-}"
-    validate_path "${4:-}"
-    validate_fstype "${5:-}"
-    validate_options "${6:-}"
-    OLD_UUID="$2"
-    NEW_UUID="$3"
-    MOUNTPOINT="$4"
-    FSTYPE="$5"
-    OPTIONS="$6"
+    validate_path "${3:-}"
+    validate_fstype "${4:-}"
+    validate_options "${5:-}"
+    UUID="$2"
+    MOUNTPOINT="$3"
+    FSTYPE="$4"
+    OPTIONS="$5"
 
-    python3 - "$OLD_UUID" "$NEW_UUID" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" <<'PY'
+    python3 - "$UUID" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" <<'PY'
 import sys
 from pathlib import Path
 
-old_uuid = sys.argv[1]
-new_uuid = sys.argv[2]
-mountpoint = sys.argv[3]
-fstype = sys.argv[4]
-options = sys.argv[5]
+uuid = sys.argv[1]
+mountpoint = sys.argv[2]
+fstype = sys.argv[3]
+options = sys.argv[4]
 fstab = Path("/etc/fstab")
 
 if not fstab.exists():
@@ -214,16 +211,16 @@ for line in lines:
     stripped = line.strip()
     if stripped and not stripped.startswith("#"):
         parts = stripped.split()
-        if parts and parts[0] == f"UUID={old_uuid}":
+        if parts and parts[0] == f"UUID={uuid}":
             found = True
             dump = parts[4] if len(parts) > 4 else "0"
             passno = parts[5] if len(parts) > 5 else "2"
-            result.append(f"UUID={new_uuid}\t{mountpoint}\t{fstype}\t{options}\t{dump} {passno}\n")
+            result.append(f"UUID={uuid}\t{mountpoint}\t{fstype}\t{options}\t{dump} {passno}\n")
             continue
     result.append(line)
 
 if not found:
-    print(f"UUID niet gevonden in fstab: {old_uuid}", file=sys.stderr)
+    print(f"UUID niet gevonden in fstab: {uuid}", file=sys.stderr)
     sys.exit(1)
 
 fstab.write_text("".join(result))
@@ -267,7 +264,7 @@ PY
     ;;
 
   *)
-    echo "Gebruik: disk-mounts {list|list-disks|add <uuid> <mountpoint> <fstype> <options>|update <old_uuid> <new_uuid> <mountpoint> <fstype> <options>|remove <uuid>}" >&2
+    echo "Gebruik: disk-mounts {list|list-disks|add <uuid> <mountpoint> <fstype> <options>|update <uuid> <mountpoint> <fstype> <options>|remove <uuid>}" >&2
     exit 1
     ;;
 esac

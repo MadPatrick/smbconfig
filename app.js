@@ -478,6 +478,18 @@ function renderMounts() {
         </tr>`;
       }).join("")
     : '<tr><td colspan="6" class="text-muted">Geen mounts geconfigureerd</td></tr>';
+
+  // Populate mountpoint datalist with NFS share paths
+  const nfsPaths = (state.nfs || []).map(e => e.path).filter(Boolean);
+  const dl = document.getElementById("mountpointSuggestions");
+  if (dl) {
+    dl.innerHTML = "";
+    nfsPaths.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p;
+      dl.appendChild(opt);
+    });
+  }
 }
 
 function useDiskUuid(uuid, fstype) {
@@ -508,21 +520,9 @@ async function addMount() {
 }
 
 function openEditMount(uuid, mountpoint, fstype, options) {
-  document.getElementById("editMountOldUuid").value = uuid;
-
-  // Populate UUID dropdown with available disks that have a UUID
-  const sel = document.getElementById("editMountUuidSelect");
-  const disks = (state.disks || []).filter(d => d.uuid);
-  // Ensure the current UUID is always present even if not in disk list
-  const knownUuids = new Set(disks.map(d => d.uuid));
-  const entries = disks.map(d => ({ uuid: d.uuid, label: `${d.uuid} (${d.name}${d.label ? ' – ' + d.label : ''})` }));
-  if (!knownUuids.has(uuid)) {
-    entries.unshift({ uuid, label: `${uuid} (huidig)` });
-  }
-  sel.innerHTML = entries.map(e =>
-    `<option value="${escapeHtml(e.uuid)}"${e.uuid === uuid ? ' selected' : ''}>${escapeHtml(e.label)}</option>`
-  ).join('');
-
+  document.getElementById("editMountUuid").value = uuid;
+  const display = document.getElementById("editMountUuidDisplay");
+  if (display) display.value = uuid;
   document.getElementById("editMountPoint").value = mountpoint;
   document.getElementById("editMountOptions").value = options;
   const fsSel = document.getElementById("editMountFstype");
@@ -532,12 +532,11 @@ function openEditMount(uuid, mountpoint, fstype, options) {
 
 async function saveEditMount() {
   try {
-    const old_uuid = document.getElementById("editMountOldUuid").value;
-    const uuid = document.getElementById("editMountUuidSelect").value;
+    const uuid = document.getElementById("editMountUuid").value;
     const mountpoint = validatePath(document.getElementById("editMountPoint").value.trim());
     const fstype = document.getElementById("editMountFstype").value;
     const options = document.getElementById("editMountOptions").value.trim() || "defaults";
-    await api("POST", "/mounts/update", { old_uuid, uuid, mountpoint, fstype, options });
+    await api("POST", "/mounts/update", { uuid, mountpoint, fstype, options });
     bootstrap.Modal.getInstance(document.getElementById("editMountModal")).hide();
     alertMsg("success", "Mount bijgewerkt");
     await loadMounts();
