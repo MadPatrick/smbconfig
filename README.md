@@ -38,7 +38,8 @@ smbconfig/
 │   ├── smb-groups        # list / create / add-member
 │   ├── smb-shares        # create / set-acl
 │   ├── smb-globalconfig  # update (globale Samba-instellingen)
-│   └── nfs-shares        # list / create / update / delete
+│   ├── nfs-shares        # list / create / update / delete
+│   └── disk-mounts       # list / list-disks / add / update / remove
 └── config/             # Configuratiebestanden
     ├── shares.json
     ├── apache-smb-webadmin.conf  # Optioneel: Apache-proxy
@@ -57,6 +58,7 @@ smbconfig/
 | `smb-shares`      | `create <naam> <pad> <groep>` · `set-acl <pad> <groep> <mode>`             |
 | `smb-globalconfig`| `update '<json>'`                                                           |
 | `nfs-shares`      | `list` · `create <pad> <client> <opties>` · `update <pad> <client> <opties>` · `delete <pad>` |
+| `disk-mounts`     | `list` · `list-disks` · `add <uuid> <mountpoint> <fstype> <opties>` · `update <uuid> <mountpoint> <fstype> <opties>` · `remove <uuid>` |
 
 ---
 
@@ -99,7 +101,6 @@ Het update-commando:
 
 **Wat de app niet doet (handmatig instellen):**
 
-- **Schijf koppelen via fstab** – gebruik `sudo blkid` om de UUID op te vragen en voeg de schijf toe aan `/etc/fstab`, daarna `sudo mount -a`.
 - **Firewall (ufw)** – sta NFS-verkeer toe vanuit jouw netwerk:
   ```bash
   sudo ufw allow from 192.168.1.0/24 to any port nfs
