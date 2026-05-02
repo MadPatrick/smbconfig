@@ -5,3 +5,4 @@ www-data ALL=(root) NOPASSWD: /opt/smbadmin/scripts/smb-shares
 www-data ALL=(root) NOPASSWD: /opt/smbadmin/scripts/smb-globalconfig
 www-data ALL=(root) NOPASSWD: /opt/smbadmin/scripts/nfs-shares
 www-data ALL=(root) NOPASSWD: /opt/smbadmin/scripts/disk-mounts
+www-data ALL=(root) NOPASSWD: /opt/smbadmin/scripts/app-update

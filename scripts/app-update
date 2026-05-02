@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+
+INSTALL_DIR="/opt/smbadmin"
+REPO_PATH_FILE="$INSTALL_DIR/config/git-repo-path"
+
+if [[ ! -f "$REPO_PATH_FILE" ]]; then
+  echo "Git repo pad niet gevonden in $REPO_PATH_FILE" >&2
+  exit 1
+fi
+
+REPO_DIR=$(cat "$REPO_PATH_FILE")
+
+if [[ ! -d "$REPO_DIR/.git" ]]; then
+  echo "Geen git repository gevonden in $REPO_DIR" >&2
+  exit 1
+fi
+
+echo "=== Git pull ==="
+cd "$REPO_DIR"
+git pull
+
+echo "=== Bestanden bijwerken ==="
+bash "$REPO_DIR/install.sh" update

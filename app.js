@@ -594,4 +594,26 @@ async function removeMount(uuid) {
   } catch (e) { alertMsg("danger", e.message); }
 }
 
+async function doUpdate() {
+  if (!confirm("SMB WebAdmin updaten via git pull + install.sh update?")) return;
+  const btn = document.getElementById("btnUpdate");
+  const outputEl = document.getElementById("updateOutput");
+  btn.disabled = true;
+  btn.textContent = "⏳ Bezig...";
+  outputEl.classList.add("d-none");
+  outputEl.textContent = "";
+  try {
+    const result = await api("POST", "/update");
+    outputEl.textContent = result.output || "Update klaar.";
+    outputEl.classList.remove("d-none");
+    alertMsg("success", "Update succesvol afgerond");
+    await loadAll();
+  } catch (e) {
+    alertMsg("danger", "Update mislukt: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🔄 Updaten";
+  }
+}
+
 loadAll();
