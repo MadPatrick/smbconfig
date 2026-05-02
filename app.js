@@ -508,21 +508,36 @@ async function addMount() {
 }
 
 function openEditMount(uuid, mountpoint, fstype, options) {
-  document.getElementById("editMountUuid").value = uuid;
+  document.getElementById("editMountOldUuid").value = uuid;
+
+  // Populate UUID dropdown with available disks that have a UUID
+  const sel = document.getElementById("editMountUuidSelect");
+  const disks = (state.disks || []).filter(d => d.uuid);
+  // Ensure the current UUID is always present even if not in disk list
+  const knownUuids = new Set(disks.map(d => d.uuid));
+  const entries = disks.map(d => ({ uuid: d.uuid, label: `${d.uuid} (${d.name}${d.label ? ' – ' + d.label : ''})` }));
+  if (!knownUuids.has(uuid)) {
+    entries.unshift({ uuid, label: `${uuid} (huidig)` });
+  }
+  sel.innerHTML = entries.map(e =>
+    `<option value="${escapeHtml(e.uuid)}"${e.uuid === uuid ? ' selected' : ''}>${escapeHtml(e.label)}</option>`
+  ).join('');
+
   document.getElementById("editMountPoint").value = mountpoint;
   document.getElementById("editMountOptions").value = options;
-  const sel = document.getElementById("editMountFstype");
-  if ([...sel.options].some(o => o.value === fstype)) sel.value = fstype;
+  const fsSel = document.getElementById("editMountFstype");
+  if ([...fsSel.options].some(o => o.value === fstype)) fsSel.value = fstype;
   new bootstrap.Modal(document.getElementById("editMountModal")).show();
 }
 
 async function saveEditMount() {
   try {
-    const uuid = document.getElementById("editMountUuid").value;
+    const old_uuid = document.getElementById("editMountOldUuid").value;
+    const uuid = document.getElementById("editMountUuidSelect").value;
     const mountpoint = validatePath(document.getElementById("editMountPoint").value.trim());
     const fstype = document.getElementById("editMountFstype").value;
     const options = document.getElementById("editMountOptions").value.trim() || "defaults";
-    await api("POST", "/mounts/update", { uuid, mountpoint, fstype, options });
+    await api("POST", "/mounts/update", { old_uuid, uuid, mountpoint, fstype, options });
     bootstrap.Modal.getInstance(document.getElementById("editMountModal")).hide();
     alertMsg("success", "Mount bijgewerkt");
     await loadMounts();

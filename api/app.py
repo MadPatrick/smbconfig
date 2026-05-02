@@ -343,11 +343,12 @@ def add_mount():
 @app.post("/api/mounts/update")
 def update_mount():
     data = request.json or {}
+    old_uuid = validate_uuid(data.get("old_uuid", ""))
     uuid = validate_uuid(data.get("uuid", ""))
     mountpoint = validate_path(data.get("mountpoint", ""))
     fstype = validate_fstype(data.get("fstype", ""))
     options = validate_mount_options(data.get("options", "defaults"))
-    run_script("disk-mounts", "update", uuid, mountpoint, fstype, options)
+    run_script("disk-mounts", "update", old_uuid, uuid, mountpoint, fstype, options)
     return jsonify({"ok": True})
 
 @app.delete("/api/mounts/<uuid>")

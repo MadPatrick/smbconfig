@@ -349,7 +349,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body">
-                <input type="hidden" id="editMountUuid">
+                <input type="hidden" id="editMountOldUuid">
+                <div class="mb-2">
+                  <label class="form-label">UUID</label>
+                  <select id="editMountUuidSelect" class="form-select mono">
+                  </select>
+                </div>
                 <div class="mb-2">
                   <label class="form-label">Mountpoint</label>
                   <input id="editMountPoint" class="form-control" placeholder="/mnt/schijf">
