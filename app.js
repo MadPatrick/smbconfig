@@ -594,6 +594,21 @@ async function removeMount(uuid) {
   } catch (e) { alertMsg("danger", e.message); }
 }
 
+async function waitForServerAndReload() {
+  const deadline = Date.now() + 60000;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      await api("GET", "/sysinfo");
+      location.reload();
+      return;
+    } catch (_) {
+      // server not yet ready, keep polling
+    }
+  }
+  location.reload();
+}
+
 async function doUpdate() {
   if (!confirm("SMB WebAdmin updaten via git pull + install.sh update?")) return;
   const btn = document.getElementById("btnUpdate");
@@ -606,11 +621,11 @@ async function doUpdate() {
     const result = await api("POST", "/update");
     outputEl.textContent = result.output || "Update klaar.";
     outputEl.classList.remove("d-none");
-    alertMsg("success", "Update succesvol afgerond – pagina wordt over 8 seconden herladen.");
-    setTimeout(() => location.reload(), 8000);
+    alertMsg("success", "Update succesvol afgerond – pagina wordt herladen zodra de service terug is…");
+    btn.disabled = true;
+    waitForServerAndReload();
   } catch (e) {
     alertMsg("danger", "Update mislukt: " + e.message);
-  } finally {
     btn.disabled = false;
     btn.textContent = "🔄 Updaten";
   }
