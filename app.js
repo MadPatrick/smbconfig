@@ -622,7 +622,6 @@ async function doUpdate() {
     outputEl.textContent = result.output || "Update klaar.";
     outputEl.classList.remove("d-none");
     alertMsg("success", "Update succesvol afgerond – pagina wordt herladen zodra de service terug is…");
-    btn.disabled = true;
     waitForServerAndReload();
   } catch (e) {
     alertMsg("danger", "Update mislukt: " + e.message);
