@@ -25,8 +25,8 @@ if [[ "${1:-}" == "update" ]]; then
   visudo -cf "$INSTALL_DIR/config/sudoers-smb-webadmin"
   cp "$INSTALL_DIR/config/sudoers-smb-webadmin" /etc/sudoers.d/smb-webadmin
   chmod 440 /etc/sudoers.d/smb-webadmin
-  systemctl restart smb-webadmin
-  echo "✓ Update klaar – service herstart."
+  systemd-run --on-active=5 systemctl restart smb-webadmin
+  echo "✓ Update klaar – service wordt over 5 seconden herstart."
   exit 0
 fi
 

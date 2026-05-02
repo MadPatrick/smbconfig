@@ -606,8 +606,8 @@ async function doUpdate() {
     const result = await api("POST", "/update");
     outputEl.textContent = result.output || "Update klaar.";
     outputEl.classList.remove("d-none");
-    alertMsg("success", "Update succesvol afgerond");
-    await loadAll();
+    alertMsg("success", "Update succesvol afgerond – pagina wordt over 8 seconden herladen.");
+    setTimeout(() => location.reload(), 8000);
   } catch (e) {
     alertMsg("danger", "Update mislukt: " + e.message);
   } finally {
