@@ -4,6 +4,7 @@ let state = {
   users: [],
   groups: [],
   shares: [],
+  nfs: [],
   smbconfig: {},
   sysinfo: {}
 };
@@ -114,7 +115,6 @@ function render() {
   document.getElementById("statUsers").innerText = state.users.length;
   document.getElementById("statGroups").innerText = state.groups.length;
   document.getElementById("statShares").innerText = state.shares.length;
-
   const cfg = state.smbconfig || {};
   document.getElementById("cfgNetbiosName").innerText = cfg["netbios name"] || "-";
   document.getElementById("cfgWorkgroup").innerText = cfg["workgroup"] || "-";
@@ -194,6 +194,20 @@ function render() {
   const shareGroupEl = document.getElementById("shareGroup");
   shareGroupEl.innerHTML = `<option value="none">-- geen groep --</option>` +
     state.groups.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join("");
+
+  document.getElementById("nfsTable").innerHTML = (state.nfs || []).map(e => {
+    const ep = escapeHtml(e.path);
+    const eid = btoa(e.path);
+    return `
+    <tr>
+      <td class="mono">${ep}</td>
+      <td><input type="text" class="form-control form-control-sm" id="nc-${eid}" value="${escapeHtml(e.client)}"></td>
+      <td><input type="text" class="form-control form-control-sm" id="no-${eid}" value="${escapeHtml(e.options)}"></td>
+      <td>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteNfsExport('${ep}')">Verwijderen</button>
+      </td>
+    </tr>`;
+  }).join("");
 }
 
 function fillSelect(id, values) {
@@ -203,13 +217,14 @@ function fillSelect(id, values) {
 
 async function loadAll() {
   try {
-    const [stateData, smbconfig, interfaces, sysinfo] = await Promise.all([
+    const [stateData, smbconfig, interfaces, sysinfo, nfs] = await Promise.all([
       api("GET", "/state"),
       api("GET", "/smbconfig"),
       api("GET", "/interfaces"),
-      api("GET", "/sysinfo")
+      api("GET", "/sysinfo"),
+      api("GET", "/nfs")
     ]);
-    state = { ...stateData, smbconfig, interfaces, sysinfo };
+    state = { ...stateData, smbconfig, interfaces, sysinfo, nfs };
     render();
   } catch (e) {
     alertMsg("danger", "Kan gegevens niet laden: " + e.message);
@@ -353,6 +368,51 @@ async function saveSmbConfig() {
     }
     await api("POST", "/smbconfig", data);
     alertMsg("success", "Configuratie opgeslagen");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function createNfsExport() {
+  try {
+    const path = validatePath(document.getElementById("nfsPath").value);
+    const client = document.getElementById("nfsClient").value.trim() || "*";
+    const options = document.getElementById("nfsOptions").value.trim() || "rw,sync,no_subtree_check";
+    await api("POST", "/nfs", { path, client, options });
+    document.getElementById("nfsPath").value = "";
+    document.getElementById("nfsClient").value = "";
+    document.getElementById("nfsOptions").value = "";
+    alertMsg("success", "NFS export aangemaakt");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function updateNfsExport(path, silent = false) {
+  try {
+    validatePath(path);
+    const eid = btoa(path);
+    const client = document.getElementById("nc-" + eid).value.trim();
+    const options = document.getElementById("no-" + eid).value.trim();
+    await api("POST", "/nfs/update", { path, client, options });
+    if (!silent) {
+      alertMsg("success", `NFS export ${escapeHtml(path)} opgeslagen`);
+      await loadAll();
+    }
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function updateAllNfsExports() {
+  try {
+    await Promise.all((state.nfs || []).map(e => updateNfsExport(e.path, true)));
+    alertMsg("success", "Alle NFS exports opgeslagen");
+    await loadAll();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function deleteNfsExport(path) {
+  if (!confirm(`NFS export ${path} verwijderen? De map op schijf blijft bewaard.`)) return;
+  try {
+    await api("DELETE", `/nfs/${path.slice(1)}`);
+    alertMsg("success", "NFS export verwijderd");
     await loadAll();
   } catch (e) { alertMsg("danger", e.message); }
 }

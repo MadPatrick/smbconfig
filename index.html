@@ -87,6 +87,7 @@
         <button class="nav-link text-start" data-page="users">Gebruikers</button>
         <button class="nav-link text-start" data-page="groups">Groepen</button>
         <button class="nav-link text-start" data-page="shares">Shares</button>
+        <button class="nav-link text-start" data-page="nfs">NFS Shares</button>
         <button class="nav-link text-start" data-page="config">Configuratie</button>
       </nav>
     </aside>
@@ -238,6 +239,37 @@
             <table class="table">
               <thead><tr><th>Naam</th><th>Pad</th><th>Groep</th><th>Rechten</th><th>Zichtbaar</th><th>Gasttoegang</th><th>Acties</th></tr></thead>
               <tbody id="sharesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-nfs" class="page d-none">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h1>NFS Shares</h1>
+          <button class="btn btn-primary" onclick="loadAll()">Vernieuwen</button>
+        </div>
+
+        <div class="card p-3 mb-3">
+          <h5>Nieuwe NFS export aanmaken</h5>
+          <div class="row g-2">
+            <div class="col-md-4"><input id="nfsPath" class="form-control" placeholder="/srv/nfs/share"></div>
+            <div class="col-md-3"><input id="nfsClient" class="form-control" placeholder="* of 192.168.1.0/24"></div>
+            <div class="col-md-3"><input id="nfsOptions" class="form-control" placeholder="rw,sync,no_subtree_check"></div>
+            <div class="col-md-2"><button class="btn btn-success w-100" onclick="createNfsExport()">Aanmaken</button></div>
+          </div>
+          <div class="form-text">Client: gebruik <code>*</code> voor iedereen, of een IP/subnet zoals <code>192.168.1.0/24</code>. Opties: bijv. <code>rw,sync,no_subtree_check</code>.</div>
+        </div>
+
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Bestaande NFS exports</h5>
+            <button class="btn btn-primary" onclick="updateAllNfsExports()">Wijzigingen opslaan</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead><tr><th>Pad</th><th>Client</th><th>Opties</th><th>Acties</th></tr></thead>
+              <tbody id="nfsTable"></tbody>
             </table>
           </div>
         </div>
