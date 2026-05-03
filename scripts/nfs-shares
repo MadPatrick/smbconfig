@@ -47,7 +47,7 @@ EXPORTS_FILE = "/etc/exports"
 
 result = []
 if os.path.exists(EXPORTS_FILE):
-    with open(EXPORTS_FILE, errors="replace") as f:
+    with open(EXPORTS_FILE, encoding="utf-8", errors="replace") as f:
         for line in f:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):

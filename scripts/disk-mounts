@@ -63,7 +63,7 @@ FSTAB = "/etc/fstab"
 uuid_to_dev = {}
 dev_to_uuid = {}
 try:
-    out = subprocess.run(["blkid", "-o", "export"], capture_output=True, text=True, timeout=10)
+    out = subprocess.run(["blkid", "-o", "export"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
     current = {}
     for line in out.stdout.splitlines():
         line = line.strip()
@@ -84,7 +84,7 @@ except Exception:
 # Parse fstab
 fstab_entries = []
 if os.path.exists(FSTAB):
-    with open(FSTAB, errors="replace") as f:
+    with open(FSTAB, encoding="utf-8", errors="replace") as f:
         for line in f:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
@@ -132,7 +132,7 @@ result = []
 try:
     out = subprocess.run(
         ["lsblk", "-J", "-o", "NAME,UUID,FSTYPE,SIZE,LABEL,MOUNTPOINT,TYPE"],
-        capture_output=True, text=True, timeout=10
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
     )
     if out.returncode == 0:
         data = json.loads(out.stdout)

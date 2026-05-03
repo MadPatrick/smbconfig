@@ -90,24 +90,29 @@ SKIP = {"global", "printers", "print$"}
 
 result = []
 if __import__("os").path.exists(SMB_CONF):
-    cp = configparser.RawConfigParser(strict=False)
-    cp.read(SMB_CONF, encoding="utf-8")
-    for section in cp.sections():
-        if section.lower() in SKIP:
-            continue
-        valid_users = cp.get(section, "valid users", fallback="")
-        group = valid_users[1:].strip() if valid_users.startswith("@") else ""
-        result.append({
-            "name": section,
-            "path": cp.get(section, "path", fallback=""),
-            "group": group,
-            "read_only":       cp.get(section, "read only",       fallback="").strip().lower(),
-            "browseable":      cp.get(section, "browseable",      fallback="").strip().lower(),
-            "guest_ok":        cp.get(section, "guest ok",        fallback="").strip().lower(),
-            "oplocks":         cp.get(section, "oplocks",         fallback="").strip().lower(),
-            "level2_oplocks":  cp.get(section, "level2 oplocks",  fallback="").strip().lower(),
-            "change_notify":   cp.get(section, "change notify",   fallback="").strip().lower(),
-        })
+    try:
+        with open(SMB_CONF, encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        cp = configparser.RawConfigParser(strict=False)
+        cp.read_string(content)
+        for section in cp.sections():
+            if section.lower() in SKIP:
+                continue
+            valid_users = cp.get(section, "valid users", fallback="")
+            group = valid_users[1:].strip() if valid_users.startswith("@") else ""
+            result.append({
+                "name": section,
+                "path": cp.get(section, "path", fallback=""),
+                "group": group,
+                "read_only":       cp.get(section, "read only",       fallback="").strip().lower(),
+                "browseable":      cp.get(section, "browseable",      fallback="").strip().lower(),
+                "guest_ok":        cp.get(section, "guest ok",        fallback="").strip().lower(),
+                "oplocks":         cp.get(section, "oplocks",         fallback="").strip().lower(),
+                "level2_oplocks":  cp.get(section, "level2 oplocks",  fallback="").strip().lower(),
+                "change_notify":   cp.get(section, "change notify",   fallback="").strip().lower(),
+            })
+    except Exception:
+        pass
 
 print(json.dumps(result))
 PY

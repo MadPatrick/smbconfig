@@ -25,7 +25,7 @@ import pwd, subprocess, json
 disabled = set()
 
 try:
-    out = subprocess.check_output(["pdbedit", "-L", "-v"], text=True, stderr=subprocess.DEVNULL)
+    out = subprocess.check_output(["pdbedit", "-L", "-v"], text=True, encoding="utf-8", errors="replace", stderr=subprocess.DEVNULL)
     current = None
     for line in out.splitlines():
         if line.startswith("Unix username:"):
