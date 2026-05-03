@@ -148,6 +148,7 @@ if not conf_path.exists():
 lines = conf_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 
 desired = {
+    "read only": read_only,
     "browseable": browseable,
     "guest ok": "yes" if guest_ok == "yes" else None,
     "oplocks": oplocks if oplocks in ("yes", "no") else None,
