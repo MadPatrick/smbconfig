@@ -39,6 +39,16 @@ def run_script(*args, stdin_data=None):
 def index():
     return app.send_static_file("index.html")
 
+VERSION_FILE = BASE_DIR / "config" / "version.json"
+
+@app.get("/api/version")
+def get_version():
+    try:
+        data = json.loads(VERSION_FILE.read_text(encoding="utf-8"))
+    except OSError:
+        data = {"version": "onbekend", "copyright": ""}
+    return jsonify(data)
+
 @app.errorhandler(Exception)
 def handle_error(e):
     code = 400 if isinstance(e, ValueError) else 500

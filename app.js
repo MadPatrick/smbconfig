@@ -700,3 +700,13 @@ async function doUpdate() {
 }
 
 loadAll();
+
+(async () => {
+  try {
+    const v = await api("GET", "/version");
+    const verEl = document.getElementById("appVersion");
+    const cpEl  = document.getElementById("appCopyright");
+    if (verEl) verEl.textContent = v.version || "";
+    if (cpEl)  cpEl.textContent  = v.copyright || "";
+  } catch (_) {}
+})();
