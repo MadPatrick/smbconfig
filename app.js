@@ -446,7 +446,9 @@ function renderMounts() {
         const hasUuid = !!d.uuid && !mountedUuids.has(d.uuid);
         const btnUse = hasUuid
           ? `<button class="btn btn-sm btn-outline-primary" onclick="useDiskUuid('${escapeHtml(d.uuid)}','${escapeHtml(d.fstype)}')">Gebruik UUID</button>`
-          : `<span class="text-muted">-</span>`;
+          : (d.uuid && mountedUuids.has(d.uuid)
+              ? `<span class="badge bg-success">In gebruik</span>`
+              : `<span class="text-muted">-</span>`);
         return `<tr>
           <td class="mono">${escapeHtml(d.name)}</td>
           <td><span class="badge bg-secondary">${escapeHtml(d.type)}</span></td>
