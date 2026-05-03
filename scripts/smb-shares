@@ -138,86 +138,93 @@ PY
 import sys
 from pathlib import Path
 
-name = sys.argv[1]
-group = sys.argv[2]
-read_only = sys.argv[3]
-browseable = sys.argv[4]
-guest_ok = sys.argv[5]
-level2_oplocks = sys.argv[6]
-change_notify = sys.argv[7]
-oplocks = sys.argv[8]
-conf_path = Path("/etc/samba/smb.conf")
-if not conf_path.exists():
-    print("smb.conf niet gevonden", file=sys.stderr)
-    sys.exit(1)
-lines = conf_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+try:
+    name = sys.argv[1]
+    group = sys.argv[2]
+    read_only = sys.argv[3]
+    browseable = sys.argv[4]
+    guest_ok = sys.argv[5]
+    level2_oplocks = sys.argv[6]
+    change_notify = sys.argv[7]
+    oplocks = sys.argv[8]
+    conf_path = Path("/etc/samba/smb.conf")
+    if not conf_path.exists():
+        print("smb.conf niet gevonden", file=sys.stderr)
+        sys.exit(1)
+    lines = conf_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 
-desired = {
-    "read only": read_only,
-    "browseable": browseable,
-    "guest ok": "yes" if guest_ok == "yes" else None,
-    "oplocks": oplocks if oplocks in ("yes", "no") else None,
-    "level2 oplocks": level2_oplocks if level2_oplocks in ("yes", "no") else None,
-    "change notify": change_notify if change_notify in ("yes", "no") else None,
-}
-if group not in ("none", ""):
-    desired["valid users"] = f"@{group}"
-    desired["force group"] = group
-    desired["create mask"] = "0660"
-    desired["directory mask"] = "2770"
-else:
-    desired["valid users"] = None
-    desired["force group"] = None
-    desired["create mask"] = "0644"
-    desired["directory mask"] = "0755"
+    desired = {
+        "read only": read_only,
+        "browseable": browseable,
+        "guest ok": "yes" if guest_ok == "yes" else None,
+        "oplocks": oplocks if oplocks in ("yes", "no") else None,
+        "level2 oplocks": level2_oplocks if level2_oplocks in ("yes", "no") else None,
+        "change notify": change_notify if change_notify in ("yes", "no") else None,
+    }
+    if group not in ("none", ""):
+        desired["valid users"] = f"@{group}"
+        desired["force group"] = group
+        desired["create mask"] = "0660"
+        desired["directory mask"] = "2770"
+    else:
+        desired["valid users"] = None
+        desired["force group"] = None
+        desired["create mask"] = "0644"
+        desired["directory mask"] = "0755"
 
-result = []
-in_section = False
-handled = set()
-found = False
-pending_blanks = []
-for line in lines:
-    stripped = line.strip()
-    if stripped == f"[{name}]":
-        found = True
-        in_section = True
+    result = []
+    in_section = False
+    handled = set()
+    found = False
+    pending_blanks = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped == f"[{name}]":
+            found = True
+            in_section = True
+            result.append(line)
+            continue
+        if in_section and stripped.startswith("[") and stripped.endswith("]"):
+            for k, v in desired.items():
+                if k not in handled and v is not None:
+                    result.append(f"   {k} = {v}\n")
+            result.extend(pending_blanks)
+            pending_blanks = []
+            in_section = False
+            result.append(line)
+            continue
+        if in_section and not stripped:
+            pending_blanks.append(line)
+            continue
+        if pending_blanks:
+            result.extend(pending_blanks)
+            pending_blanks = []
+        if in_section and "=" in stripped:
+            key = stripped.split("=")[0].strip().lower()
+            if key in desired:
+                handled.add(key)
+                if desired[key] is not None:
+                    result.append(f"   {key} = {desired[key]}\n")
+                continue
         result.append(line)
-        continue
-    if in_section and stripped.startswith("[") and stripped.endswith("]"):
+
+    if in_section:
         for k, v in desired.items():
             if k not in handled and v is not None:
                 result.append(f"   {k} = {v}\n")
         result.extend(pending_blanks)
-        pending_blanks = []
-        in_section = False
-        result.append(line)
-        continue
-    if in_section and not stripped:
-        pending_blanks.append(line)
-        continue
-    if pending_blanks:
-        result.extend(pending_blanks)
-        pending_blanks = []
-    if in_section and "=" in stripped:
-        key = stripped.split("=")[0].strip().lower()
-        if key in desired:
-            handled.add(key)
-            if desired[key] is not None:
-                result.append(f"   {key} = {desired[key]}\n")
-            continue
-    result.append(line)
 
-if in_section:
-    for k, v in desired.items():
-        if k not in handled and v is not None:
-            result.append(f"   {k} = {v}\n")
-    result.extend(pending_blanks)
+    if not found:
+        print(f"Share niet gevonden: {name}", file=sys.stderr)
+        sys.exit(1)
 
-if not found:
-    print(f"Share niet gevonden: {name}", file=sys.stderr)
+    conf_path.write_text("".join(result), encoding="utf-8")
+except OSError as e:
+    print(f"Bestandsfout bij bijwerken smb.conf: {e}", file=sys.stderr)
     sys.exit(1)
-
-conf_path.write_text("".join(result), encoding="utf-8")
+except Exception as e:
+    print(f"Fout bij bijwerken share: {e}", file=sys.stderr)
+    sys.exit(1)
 PY
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
@@ -231,30 +238,37 @@ PY
 import sys
 from pathlib import Path
 
-name = sys.argv[1]
-conf = Path("/etc/samba/smb.conf")
-if not conf.exists():
-    print("smb.conf niet gevonden", file=sys.stderr)
+try:
+    name = sys.argv[1]
+    conf = Path("/etc/samba/smb.conf")
+    if not conf.exists():
+        print("smb.conf niet gevonden", file=sys.stderr)
+        sys.exit(1)
+    lines = conf.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    result = []
+    skip = False
+    found = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped == f"[{name}]":
+            skip = True
+            found = True
+            continue
+        if skip and stripped.startswith("[") and stripped.endswith("]"):
+            skip = False
+        if not skip:
+            result.append(line)
+    if not found:
+        print(f"Share niet gevonden in smb.conf: {name}", file=sys.stderr)
+        sys.exit(1)
+    # Strip trailing blank lines that were part of the removed section
+    conf.write_text("".join(result).rstrip("\n") + "\n", encoding="utf-8")
+except OSError as e:
+    print(f"Bestandsfout bij verwijderen share: {e}", file=sys.stderr)
     sys.exit(1)
-lines = conf.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
-result = []
-skip = False
-found = False
-for line in lines:
-    stripped = line.strip()
-    if stripped == f"[{name}]":
-        skip = True
-        found = True
-        continue
-    if skip and stripped.startswith("[") and stripped.endswith("]"):
-        skip = False
-    if not skip:
-        result.append(line)
-if not found:
-    print(f"Share niet gevonden in smb.conf: {name}", file=sys.stderr)
+except Exception as e:
+    print(f"Fout bij verwijderen share: {e}", file=sys.stderr)
     sys.exit(1)
-# Strip trailing blank lines that were part of the removed section
-conf.write_text("".join(result).rstrip("\n") + "\n", encoding="utf-8")
 PY
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
