@@ -16,7 +16,7 @@ import sys, json
 from pathlib import Path
 
 try:
-    data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace"))
+    data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
     conf_path = Path("/etc/samba/smb.conf")
     if not conf_path.exists():
         print("smb.conf niet gevonden", file=sys.stderr)
