@@ -23,9 +23,14 @@ case "$CMD" in
 import grp, json
 
 groups = []
-for g in grp.getgrall():
-    if 1000 <= g.gr_gid < 2000:
-        groups.append({"name": g.gr_name, "members": list(g.gr_mem)})
+try:
+    for g in grp.getgrall():
+        if 1000 <= g.gr_gid < 2000:
+            groups.append({"name": g.gr_name, "members": list(g.gr_mem)})
+except Exception:
+    # Silently return an empty list when group enumeration fails
+    # (e.g. UnicodeDecodeError on non-UTF-8 group names).
+    pass
 
 print(json.dumps(groups))
 PY
