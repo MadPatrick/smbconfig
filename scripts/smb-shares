@@ -223,7 +223,7 @@ except OSError as e:
     print(f"Bestandsfout bij bijwerken smb.conf: {e}", file=sys.stderr)
     sys.exit(1)
 except Exception as e:
-    print(f"Fout bij bijwerken share: {e}", file=sys.stderr)
+    print(f"Onverwachte fout bij bijwerken share: {e}", file=sys.stderr)
     sys.exit(1)
 PY
     testparm -s >/dev/null 2>&1 || true
@@ -267,7 +267,7 @@ except OSError as e:
     print(f"Bestandsfout bij verwijderen share: {e}", file=sys.stderr)
     sys.exit(1)
 except Exception as e:
-    print(f"Fout bij verwijderen share: {e}", file=sys.stderr)
+    print(f"Onverwachte fout bij verwijderen share: {e}", file=sys.stderr)
     sys.exit(1)
 PY
     testparm -s >/dev/null 2>&1 || true
