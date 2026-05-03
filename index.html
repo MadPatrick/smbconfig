@@ -535,6 +535,26 @@
                   <label class="form-label mono">min receivefile size</label>
                   <input id="cfg-min-receivefile-size" type="number" class="form-control" placeholder="16384">
                 </div>
+                <div class="col-12">
+                  <label class="form-label mono">read raw</label>
+                  <select id="cfg-read-raw" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">write raw</label>
+                  <select id="cfg-write-raw" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">max xmit</label>
+                  <input id="cfg-max-xmit" type="number" class="form-control" placeholder="65535">
+                </div>
               </div>
             </div>
           </div>
@@ -543,6 +563,10 @@
             <div class="card p-3 h-100">
               <h5 class="mb-2">Logging</h5>
               <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">log level</label>
+                  <input id="cfg-log-level" type="number" class="form-control" placeholder="1">
+                </div>
                 <div class="col-12">
                   <label class="form-label mono">max log size</label>
                   <input id="cfg-max-log-size" type="number" class="form-control" placeholder="5000">
@@ -698,6 +722,94 @@
                 <div class="col-12">
                   <label class="form-label mono">panic action</label>
                   <input id="cfg-panic-action" class="form-control" placeholder="/usr/share/samba/panic-action %d">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Change Notifications</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">change notify</label>
+                  <select id="cfg-change-notify" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">kernel change notify</label>
+                  <select id="cfg-kernel-change-notify" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">change notify timeout</label>
+                  <input id="cfg-change-notify-timeout" type="number" class="form-control" placeholder="5">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">Oplocks</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">oplocks</label>
+                  <select id="cfg-oplocks" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">level2 oplocks</label>
+                  <select id="cfg-level2-oplocks" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">kernel oplocks</label>
+                  <select id="cfg-kernel-oplocks" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3 h-100">
+              <h5 class="mb-2">ACL support</h5>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label mono">vfs objects</label>
+                  <input id="cfg-vfs-objects" class="form-control" placeholder="acl_xattr">
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">map acl inherit</label>
+                  <select id="cfg-map-acl-inherit" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label mono">store dos attributes</label>
+                  <select id="cfg-store-dos-attributes" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="yes">yes</option>
+                    <option value="no">no</option>
+                  </select>
                 </div>
               </div>
             </div>
