@@ -10,7 +10,12 @@ case "$CMD" in
   update)
     _json_tmp=$(mktemp)
     trap 'rm -f "$_json_tmp"' EXIT
-    printf '%s' "${2:-{}}" > "$_json_tmp"
+    # Read JSON from stdin (passed via subprocess pipe, avoids bash expansion)
+    cat > "$_json_tmp"
+    if [ ! -s "$_json_tmp" ]; then
+      echo "Geen JSON invoer ontvangen" >&2
+      exit 1
+    fi
     python3 - "$_json_tmp" <<'PY'
 import sys, json
 from pathlib import Path

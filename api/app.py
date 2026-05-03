@@ -27,9 +27,10 @@ def validate_path(value):
         raise ValueError("Ongeldig pad")
     return value
 
-def run_script(*args):
+def run_script(*args, stdin_data=None):
     cmd = ["sudo", str(BASE_DIR / "scripts" / args[0]), *args[1:]]
-    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace")
+    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace",
+                               input=stdin_data)
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Script fout")
     return completed.stdout.strip()
@@ -98,7 +99,7 @@ def save_smbconfig():
         if not SAFE_CONFIG_VALUE.match(value):
             raise ValueError(f"Ongeldige waarde voor '{key}'")
         clean[key] = value.strip()
-    run_script("smb-globalconfig", "update", json.dumps(clean))
+    run_script("smb-globalconfig", "update", stdin_data=json.dumps(clean))
     return jsonify({"ok": True})
 
 @app.get("/api/sysinfo")
