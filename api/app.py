@@ -29,7 +29,7 @@ def validate_path(value):
 
 def run_script(*args):
     cmd = ["sudo", str(BASE_DIR / "scripts" / args[0]), *args[1:]]
-    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace")
+    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace", cwd="/tmp")
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Script fout")
     return completed.stdout.strip()
