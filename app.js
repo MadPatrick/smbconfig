@@ -183,6 +183,7 @@ function render() {
       </td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sb-${sn}"${s.browseable === 'yes' ? ' checked' : ''}></td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sgo-${sn}"${s.guest_ok === 'yes' ? ' checked' : ''}></td>
+      <td class="text-center"><input type="checkbox" class="form-check-input" id="sop-${sn}"${s.oplocks === 'yes' ? ' checked' : ''}></td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="sl2-${sn}"${s.level2_oplocks === 'yes' ? ' checked' : ''}></td>
       <td class="text-center"><input type="checkbox" class="form-check-input" id="scn-${sn}"${s.change_notify === 'yes' ? ' checked' : ''}></td>
       <td>
@@ -329,10 +330,11 @@ async function updateShare(sharename, silent = false) {
     const read_only = document.getElementById("sro-" + sharename).value;
     const browseable = document.getElementById("sb-" + sharename).checked ? "yes" : "no";
     const guest_ok = document.getElementById("sgo-" + sharename).checked ? "yes" : "no";
+    const oplocks = document.getElementById("sop-" + sharename).checked ? "yes" : "no";
     const level2_oplocks = document.getElementById("sl2-" + sharename).checked ? "yes" : "no";
     const change_notify = document.getElementById("scn-" + sharename).checked ? "yes" : "no";
     if (group) validateName(group, "groepsnaam");
-    await api("POST", `/shares/${encodeURIComponent(sharename)}/update`, { group, read_only, browseable, guest_ok, level2_oplocks, change_notify });
+    await api("POST", `/shares/${encodeURIComponent(sharename)}/update`, { group, read_only, browseable, guest_ok, oplocks, level2_oplocks, change_notify });
     if (!silent) {
       alertMsg("success", `Share ${escapeHtml(sharename)} opgeslagen`);
       await loadAll();

@@ -104,6 +104,7 @@ if __import__("os").path.exists(SMB_CONF):
             "read_only":       cp.get(section, "read only",       fallback="").strip().lower(),
             "browseable":      cp.get(section, "browseable",      fallback="").strip().lower(),
             "guest_ok":        cp.get(section, "guest ok",        fallback="").strip().lower(),
+            "oplocks":         cp.get(section, "oplocks",         fallback="").strip().lower(),
             "level2_oplocks":  cp.get(section, "level2 oplocks",  fallback="").strip().lower(),
             "change_notify":   cp.get(section, "change notify",   fallback="").strip().lower(),
         })
@@ -121,13 +122,14 @@ PY
     GUEST_OK="${6:-no}"
     LEVEL2_OPLOCKS="${7:-}"
     CHANGE_NOTIFY="${8:-}"
+    OPLOCKS="${9:-}"
 
     if [[ "$GROUP_NAME" != "none" ]]; then
       validate_name "$GROUP_NAME"
       getent group "$GROUP_NAME" >/dev/null
     fi
 
-    python3 - "$SHARE_NAME" "$GROUP_NAME" "$READ_ONLY" "$BROWSEABLE" "$GUEST_OK" "$LEVEL2_OPLOCKS" "$CHANGE_NOTIFY" <<'PY'
+    python3 - "$SHARE_NAME" "$GROUP_NAME" "$READ_ONLY" "$BROWSEABLE" "$GUEST_OK" "$LEVEL2_OPLOCKS" "$CHANGE_NOTIFY" "$OPLOCKS" <<'PY'
 import sys
 from pathlib import Path
 
@@ -138,6 +140,7 @@ browseable = sys.argv[4]
 guest_ok = sys.argv[5]
 level2_oplocks = sys.argv[6]
 change_notify = sys.argv[7]
+oplocks = sys.argv[8]
 conf_path = Path("/etc/samba/smb.conf")
 if not conf_path.exists():
     print("smb.conf niet gevonden", file=sys.stderr)
@@ -148,6 +151,7 @@ desired = {
     "read only": read_only,
     "browseable": browseable,
     "guest ok": "yes" if guest_ok == "yes" else None,
+    "oplocks": oplocks if oplocks in ("yes", "no") else None,
     "level2 oplocks": level2_oplocks if level2_oplocks in ("yes", "no") else None,
     "change notify": change_notify if change_notify in ("yes", "no") else None,
 }
@@ -166,6 +170,7 @@ result = []
 in_section = False
 handled = set()
 found = False
+pending_blanks = []
 for line in lines:
     stripped = line.strip()
     if stripped == f"[{name}]":
@@ -177,9 +182,17 @@ for line in lines:
         for k, v in desired.items():
             if k not in handled and v is not None:
                 result.append(f"   {k} = {v}\n")
+        result.extend(pending_blanks)
+        pending_blanks = []
         in_section = False
         result.append(line)
         continue
+    if in_section and not stripped:
+        pending_blanks.append(line)
+        continue
+    if pending_blanks:
+        result.extend(pending_blanks)
+        pending_blanks = []
     if in_section and "=" in stripped:
         key = stripped.split("=")[0].strip().lower()
         if key in desired:
@@ -193,6 +206,7 @@ if in_section:
     for k, v in desired.items():
         if k not in handled and v is not None:
             result.append(f"   {k} = {v}\n")
+    result.extend(pending_blanks)
 
 if not found:
     print(f"Share niet gevonden: {name}", file=sys.stderr)

@@ -246,6 +246,7 @@ def update_share(sharename):
     guest_ok = data.get("guest_ok", "no")
     level2_oplocks = data.get("level2_oplocks", "")
     change_notify = data.get("change_notify", "")
+    oplocks = data.get("oplocks", "")
     if read_only not in ("yes", "no"):
         raise ValueError("Ongeldige read_only waarde")
     if browseable not in ("yes", "no"):
@@ -256,10 +257,12 @@ def update_share(sharename):
         raise ValueError("Ongeldige level2_oplocks waarde")
     if change_notify not in ("yes", "no", ""):
         raise ValueError("Ongeldige change_notify waarde")
+    if oplocks not in ("yes", "no", ""):
+        raise ValueError("Ongeldige oplocks waarde")
     shares = json.loads(run_script("smb-shares", "list"))
     if not any(s["name"] == sharename for s in shares):
         raise ValueError("Share niet gevonden")
-    run_script("smb-shares", "update", sharename, group, read_only, browseable, guest_ok, level2_oplocks, change_notify)
+    run_script("smb-shares", "update", sharename, group, read_only, browseable, guest_ok, level2_oplocks, change_notify, oplocks)
     return jsonify({"ok": True})
 
 
