@@ -307,7 +307,7 @@ for line in lines:
             found = True
             dump = parts[4] if len(parts) > 4 else "0"
             passno = parts[5] if len(parts) > 5 else "0"
-            result.append(f"{spec}\t{mountpoint}\t{fstype}\t{options}\t{dump} {passno}\n")
+            result.append(f"{spec}\t{mountpoint}\t{fstype}\t{options}\t{dump}\t{passno}\n")
             continue
     result.append(line)
 

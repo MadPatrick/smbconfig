@@ -473,10 +473,10 @@ function renderMounts() {
           : '<span class="badge bg-secondary">nee</span>';
         const editBtn = m.uuid
           ? `<button class="btn btn-sm btn-outline-secondary" onclick="openEditMount('${uuid}','${escapeHtml(m.mountpoint)}','${escapeHtml(m.fstype)}','${escapeHtml(m.options)}')">Bewerken</button> `
-          : `<button class="btn btn-sm btn-outline-secondary" onclick="openEditMountBySpec('${spec}','${escapeHtml(m.mountpoint)}','${escapeHtml(m.fstype)}','${escapeHtml(m.options)}')">Bewerken</button> `;
+          : `<button class="btn btn-sm btn-outline-secondary" onclick="openEditMountBySpec('${escapeHtml(m.spec)}','${escapeHtml(m.mountpoint)}','${escapeHtml(m.fstype)}','${escapeHtml(m.options)}')">Bewerken</button> `;
         const delBtn = m.uuid
           ? `<button class="btn btn-sm btn-outline-danger" onclick="removeMount('${uuid}')">Verwijderen</button>`
-          : `<button class="btn btn-sm btn-outline-danger" onclick="removeBySpec('${spec}')">Verwijderen</button>`;
+          : `<button class="btn btn-sm btn-outline-danger" onclick="removeBySpec('${escapeHtml(m.spec)}')">Verwijderen</button>`;
         return `<tr>
           <td>${display}</td>
           <td class="mono">${escapeHtml(m.mountpoint)}</td>
