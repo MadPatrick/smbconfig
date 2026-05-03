@@ -29,7 +29,7 @@ def validate_path(value):
 
 def run_script(*args):
     cmd = ["sudo", str(BASE_DIR / "scripts" / args[0]), *args[1:]]
-    completed = subprocess.run(cmd, text=True, capture_output=True)
+    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace")
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Script fout")
     return completed.stdout.strip()
@@ -68,7 +68,7 @@ SAFE_CONFIG_VALUE = re.compile(r"^[^\n\r\x00#;]{0,500}$")
 def smbconfig():
     result = {k: "" for k in SMB_CONF_KEYS}
     try:
-        text = SMB_CONF.read_text(errors="replace")
+        text = SMB_CONF.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return jsonify(result)
     in_global = False
@@ -105,13 +105,13 @@ def save_smbconfig():
 def sysinfo():
     def _read(path, fallback=""):
         try:
-            return Path(path).read_text(errors="replace").strip()
+            return Path(path).read_text(encoding="utf-8", errors="replace").strip()
         except OSError:
             return fallback
 
     def _run_safe(*cmd):
         try:
-            result = subprocess.run(list(cmd), text=True, capture_output=True, timeout=5)
+            result = subprocess.run(list(cmd), text=True, capture_output=True, encoding="utf-8", errors="replace", timeout=5)
             return result.stdout.strip() if result.returncode == 0 else ""
         except Exception:
             return ""

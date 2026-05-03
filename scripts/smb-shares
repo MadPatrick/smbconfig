@@ -91,7 +91,7 @@ SKIP = {"global", "printers", "print$"}
 result = []
 if __import__("os").path.exists(SMB_CONF):
     cp = configparser.RawConfigParser(strict=False)
-    cp.read(SMB_CONF)
+    cp.read(SMB_CONF, encoding="utf-8")
     for section in cp.sections():
         if section.lower() in SKIP:
             continue
@@ -145,7 +145,7 @@ conf_path = Path("/etc/samba/smb.conf")
 if not conf_path.exists():
     print("smb.conf niet gevonden", file=sys.stderr)
     sys.exit(1)
-lines = conf_path.read_text().splitlines(keepends=True)
+lines = conf_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 
 desired = {
     "read only": read_only,
@@ -212,7 +212,7 @@ if not found:
     print(f"Share niet gevonden: {name}", file=sys.stderr)
     sys.exit(1)
 
-conf_path.write_text("".join(result))
+conf_path.write_text("".join(result), encoding="utf-8")
 PY
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
@@ -231,7 +231,7 @@ conf = Path("/etc/samba/smb.conf")
 if not conf.exists():
     print("smb.conf niet gevonden", file=sys.stderr)
     sys.exit(1)
-lines = conf.read_text().splitlines(keepends=True)
+lines = conf.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 result = []
 skip = False
 found = False
@@ -249,7 +249,7 @@ if not found:
     print(f"Share niet gevonden in smb.conf: {name}", file=sys.stderr)
     sys.exit(1)
 # Strip trailing blank lines that were part of the removed section
-conf.write_text("".join(result).rstrip("\n") + "\n")
+conf.write_text("".join(result).rstrip("\n") + "\n", encoding="utf-8")
 PY
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true

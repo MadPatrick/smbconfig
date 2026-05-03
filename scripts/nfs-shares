@@ -116,7 +116,7 @@ if not exports.exists():
     print("/etc/exports niet gevonden", file=sys.stderr)
     sys.exit(1)
 
-lines = exports.read_text(errors="replace").splitlines(keepends=True)
+lines = exports.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 result = []
 found = False
 for line in lines:
@@ -133,7 +133,7 @@ if not found:
     print(f"Export niet gevonden: {path}", file=sys.stderr)
     sys.exit(1)
 
-exports.write_text("".join(result))
+exports.write_text("".join(result), encoding="utf-8")
 PY
     reload_nfs
     ;;
@@ -153,7 +153,7 @@ if not exports.exists():
     print("/etc/exports niet gevonden", file=sys.stderr)
     sys.exit(1)
 
-lines = exports.read_text(errors="replace").splitlines(keepends=True)
+lines = exports.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 result = []
 found = False
 for line in lines:
@@ -169,7 +169,7 @@ if not found:
     print(f"Export niet gevonden: {path}", file=sys.stderr)
     sys.exit(1)
 
-exports.write_text("".join(result).rstrip("\n") + "\n")
+exports.write_text("".join(result).rstrip("\n") + "\n", encoding="utf-8")
 PY
     reload_nfs
     ;;

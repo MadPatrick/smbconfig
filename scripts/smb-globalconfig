@@ -19,7 +19,7 @@ if not conf_path.exists():
     print("smb.conf niet gevonden", file=sys.stderr)
     sys.exit(1)
 
-lines = conf_path.read_text(errors="replace").splitlines(keepends=True)
+lines = conf_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 result = []
 in_global = False
 handled = set()
@@ -54,7 +54,7 @@ if in_global:
         if k not in handled and v:
             result.append(f"   {k} = {v}\n")
 
-conf_path.write_text("".join(result))
+conf_path.write_text("".join(result), encoding="utf-8")
 PY
     testparm -s >/dev/null 2>&1 || true
     systemctl reload smbd 2>/dev/null || systemctl restart smbd 2>/dev/null || true
