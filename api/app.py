@@ -29,7 +29,7 @@ def validate_path(value):
 
 def run_script(*args):
     cmd = ["sudo", str(BASE_DIR / "scripts" / args[0]), *args[1:]]
-    completed = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace")
+    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace")
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Script fout")
     return completed.stdout.strip()
@@ -111,7 +111,7 @@ def sysinfo():
 
     def _run_safe(*cmd):
         try:
-            result = subprocess.run(list(cmd), capture_output=True, encoding="utf-8", errors="replace", timeout=5)
+            result = subprocess.run(list(cmd), text=True, capture_output=True, encoding="utf-8", errors="replace", timeout=5)
             return result.stdout.strip() if result.returncode == 0 else ""
         except Exception:
             return ""
