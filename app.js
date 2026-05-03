@@ -28,6 +28,19 @@ const CONFIG_FIELDS = {
   "aio write size": "cfg-aio-write-size",
   "use sendfile": "cfg-use-sendfile",
   "min receivefile size": "cfg-min-receivefile-size",
+  "read raw": "cfg-read-raw",
+  "write raw": "cfg-write-raw",
+  "max xmit": "cfg-max-xmit",
+  "change notify": "cfg-change-notify",
+  "kernel change notify": "cfg-kernel-change-notify",
+  "change notify timeout": "cfg-change-notify-timeout",
+  "oplocks": "cfg-oplocks",
+  "level2 oplocks": "cfg-level2-oplocks",
+  "kernel oplocks": "cfg-kernel-oplocks",
+  "vfs objects": "cfg-vfs-objects",
+  "map acl inherit": "cfg-map-acl-inherit",
+  "store dos attributes": "cfg-store-dos-attributes",
+  "log level": "cfg-log-level",
   "max log size": "cfg-max-log-size",
   "logging": "cfg-logging",
   "log file": "cfg-log-file",
@@ -181,11 +194,36 @@ function render() {
           <option value="yes"${s.read_only === 'yes' ? ' selected' : ''}>Lezen</option>
         </select>
       </td>
-      <td class="text-center"><input type="checkbox" class="form-check-input" id="sb-${sn}"${s.browseable === 'yes' ? ' checked' : ''}></td>
-      <td class="text-center"><input type="checkbox" class="form-check-input" id="sgo-${sn}"${s.guest_ok === 'yes' ? ' checked' : ''}></td>
-      <td class="text-center"><input type="checkbox" class="form-check-input" id="sop-${sn}"${s.oplocks === 'yes' ? ' checked' : ''}></td>
-      <td class="text-center"><input type="checkbox" class="form-check-input" id="sl2-${sn}"${s.level2_oplocks === 'yes' ? ' checked' : ''}></td>
-      <td class="text-center"><input type="checkbox" class="form-check-input" id="scn-${sn}"${s.change_notify === 'yes' ? ' checked' : ''}></td>
+      <td>
+        <select class="form-select form-select-sm" id="sb-${sn}">
+          <option value="yes"${s.browseable !== 'no' ? ' selected' : ''}>yes</option>
+          <option value="no"${s.browseable === 'no' ? ' selected' : ''}>no</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" id="sgo-${sn}">
+          <option value="yes"${s.guest_ok === 'yes' ? ' selected' : ''}>yes</option>
+          <option value="no"${s.guest_ok !== 'yes' ? ' selected' : ''}>no</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" id="sop-${sn}">
+          <option value="yes"${s.oplocks !== 'no' ? ' selected' : ''}>yes</option>
+          <option value="no"${s.oplocks === 'no' ? ' selected' : ''}>no</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" id="sl2-${sn}">
+          <option value="yes"${s.level2_oplocks !== 'no' ? ' selected' : ''}>yes</option>
+          <option value="no"${s.level2_oplocks === 'no' ? ' selected' : ''}>no</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" id="scn-${sn}">
+          <option value="yes"${s.change_notify !== 'no' ? ' selected' : ''}>yes</option>
+          <option value="no"${s.change_notify === 'no' ? ' selected' : ''}>no</option>
+        </select>
+      </td>
       <td>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteShare('${sn}')">Verwijderen</button>
       </td>
@@ -328,11 +366,11 @@ async function updateShare(sharename, silent = false) {
     validateName(sharename, "share naam");
     const group = document.getElementById("sg-" + sharename).value;
     const read_only = document.getElementById("sro-" + sharename).value;
-    const browseable = document.getElementById("sb-" + sharename).checked ? "yes" : "no";
-    const guest_ok = document.getElementById("sgo-" + sharename).checked ? "yes" : "no";
-    const oplocks = document.getElementById("sop-" + sharename).checked ? "yes" : "no";
-    const level2_oplocks = document.getElementById("sl2-" + sharename).checked ? "yes" : "no";
-    const change_notify = document.getElementById("scn-" + sharename).checked ? "yes" : "no";
+    const browseable = document.getElementById("sb-" + sharename).value;
+    const guest_ok = document.getElementById("sgo-" + sharename).value;
+    const oplocks = document.getElementById("sop-" + sharename).value;
+    const level2_oplocks = document.getElementById("sl2-" + sharename).value;
+    const change_notify = document.getElementById("scn-" + sharename).value;
     if (group) validateName(group, "groepsnaam");
     await api("POST", `/shares/${encodeURIComponent(sharename)}/update`, { group, read_only, browseable, guest_ok, oplocks, level2_oplocks, change_notify });
     if (!silent) {
