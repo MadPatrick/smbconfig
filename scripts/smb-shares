@@ -111,7 +111,7 @@ if __import__("os").path.exists(SMB_CONF):
                 "level2_oplocks":  cp.get(section, "level2 oplocks",  fallback="").strip().lower(),
                 "change_notify":   cp.get(section, "change notify",   fallback="").strip().lower(),
             })
-    except Exception:
+    except (OSError, configparser.Error):
         pass
 
 print(json.dumps(result))
