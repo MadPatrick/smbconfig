@@ -8,13 +8,15 @@ CMD="${1:-}"
 
 case "$CMD" in
   update)
-    JSON_DATA="${2:-{}}"
-    python3 - "$JSON_DATA" <<'PY'
+    _json_tmp=$(mktemp)
+    trap 'rm -f "$_json_tmp"' EXIT
+    printf '%s' "${2:-{}}" > "$_json_tmp"
+    python3 - "$_json_tmp" <<'PY'
 import sys, json
 from pathlib import Path
 
 try:
-    data = json.loads(sys.argv[1])
+    data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace"))
     conf_path = Path("/etc/samba/smb.conf")
     if not conf_path.exists():
         print("smb.conf niet gevonden", file=sys.stderr)
