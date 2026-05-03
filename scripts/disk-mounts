@@ -6,14 +6,16 @@
 #   disk-mounts add <uuid> <mountpoint> <fstype> <options>
 #   disk-mounts update <uuid> <mountpoint> <fstype> <options>
 #   disk-mounts remove <uuid>
+#   disk-mounts update-by-spec <spec> <mountpoint> <fstype> <options>
+#   disk-mounts remove-by-spec <spec>
 set -euo pipefail
 
 CMD="${1:-}"
 FSTAB="/etc/fstab"
 SAFE_UUID='^[0-9a-fA-F-]{1,36}$'
 SAFE_PATH='^/[a-zA-Z0-9._/\-]{1,240}$'
-SAFE_FSTYPE='^(ext2|ext3|ext4|xfs|btrfs|vfat|exfat|ntfs|ntfs-3g|f2fs|jfs|reiserfs|tmpfs|nfs|nfs4|cifs|auto)$'
-SAFE_OPTIONS='^[a-zA-Z0-9,=_.@-]{1,256}$'
+SAFE_FSTYPE='^(ext2|ext3|ext4|xfs|btrfs|vfat|exfat|ntfs|ntfs-3g|f2fs|jfs|reiserfs|tmpfs|nfs|nfs4|cifs|auto|none|udf|iso9660|udf,iso9660)$'
+SAFE_OPTIONS='^[a-zA-Z0-9,=_.@/:+-]{1,512}$'
 
 validate_uuid() {
   if ! [[ "${1:-}" =~ $SAFE_UUID ]]; then
@@ -39,6 +41,13 @@ validate_fstype() {
 validate_options() {
   if ! [[ "${1:-}" =~ $SAFE_OPTIONS ]]; then
     echo "Ongeldige opties: ${1:-}" >&2
+    exit 1
+  fi
+}
+
+validate_spec() {
+  if ! [[ "${1:-}" =~ $SAFE_PATH ]] || [[ "${1:-}" == *".."* ]]; then
+    echo "Ongeldig apparaat/spec: ${1:-}" >&2
     exit 1
   fi
 }
@@ -263,8 +272,91 @@ fstab.write_text("".join(result).rstrip("\n") + "\n")
 PY
     ;;
 
+  update-by-spec)
+    validate_spec "${2:-}"
+    validate_path "${3:-}"
+    validate_fstype "${4:-}"
+    validate_options "${5:-}"
+    SPEC="$2"
+    MOUNTPOINT="$3"
+    FSTYPE="$4"
+    OPTIONS="$5"
+
+    python3 - "$SPEC" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" <<'PY'
+import sys
+from pathlib import Path
+
+spec = sys.argv[1]
+mountpoint = sys.argv[2]
+fstype = sys.argv[3]
+options = sys.argv[4]
+fstab = Path("/etc/fstab")
+
+if not fstab.exists():
+    print("/etc/fstab niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = fstab.read_text(errors="replace").splitlines(keepends=True)
+result = []
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped and not stripped.startswith("#"):
+        parts = stripped.split()
+        if parts and parts[0] == spec:
+            found = True
+            dump = parts[4] if len(parts) > 4 else "0"
+            passno = parts[5] if len(parts) > 5 else "0"
+            result.append(f"{spec}\t{mountpoint}\t{fstype}\t{options}\t{dump}\t{passno}\n")
+            continue
+    result.append(line)
+
+if not found:
+    print(f"Spec niet gevonden in fstab: {spec}", file=sys.stderr)
+    sys.exit(1)
+
+fstab.write_text("".join(result))
+PY
+    mount -a 2>/dev/null || true
+    ;;
+
+  remove-by-spec)
+    validate_spec "${2:-}"
+    SPEC="$2"
+
+    python3 - "$SPEC" <<'PY'
+import sys
+from pathlib import Path
+
+spec = sys.argv[1]
+fstab = Path("/etc/fstab")
+
+if not fstab.exists():
+    print("/etc/fstab niet gevonden", file=sys.stderr)
+    sys.exit(1)
+
+lines = fstab.read_text(errors="replace").splitlines(keepends=True)
+result = []
+found = False
+for line in lines:
+    stripped = line.strip()
+    if stripped and not stripped.startswith("#"):
+        parts = stripped.split()
+        if parts and parts[0] == spec:
+            found = True
+            continue
+    result.append(line)
+
+if not found:
+    print(f"Spec niet gevonden in fstab: {spec}", file=sys.stderr)
+    sys.exit(1)
+
+fstab.write_text("".join(result).rstrip("\n") + "\n")
+PY
+    ;;
+
   *)
-    echo "Gebruik: disk-mounts {list|list-disks|add <uuid> <mountpoint> <fstype> <options>|update <uuid> <mountpoint> <fstype> <options>|remove <uuid>}" >&2
+    echo "Gebruik: disk-mounts {list|list-disks|add <uuid> <mountpoint> <fstype> <options>|update <uuid> <mountpoint> <fstype> <options>|remove <uuid>|update-by-spec <spec> <mountpoint> <fstype> <options>|remove-by-spec <spec>}" >&2
     exit 1
     ;;
 esac

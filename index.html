@@ -329,6 +329,8 @@
                 <option value="ntfs">ntfs</option>
                 <option value="ntfs-3g">ntfs-3g</option>
                 <option value="f2fs">f2fs</option>
+                <option value="none">none</option>
+                <option value="udf,iso9660">udf,iso9660</option>
                 <option value="auto">auto</option>
               </select>
             </div>
@@ -363,8 +365,9 @@
               </div>
               <div class="modal-body">
                 <input type="hidden" id="editMountUuid">
+                <input type="hidden" id="editMountSpec">
                 <div class="mb-2">
-                  <label class="form-label">UUID</label>
+                  <label class="form-label">UUID / Apparaat</label>
                   <input id="editMountUuidDisplay" class="form-control mono" readonly>
                 </div>
                 <div class="mb-2">
@@ -384,6 +387,8 @@
                     <option value="ntfs">ntfs</option>
                     <option value="ntfs-3g">ntfs-3g</option>
                     <option value="f2fs">f2fs</option>
+                    <option value="none">none</option>
+                    <option value="udf,iso9660">udf,iso9660</option>
                     <option value="auto">auto</option>
                   </select>
                 </div>

@@ -14,8 +14,8 @@ SAFE_PATH = re.compile(r"^/[a-zA-Z0-9._/\-]{1,240}$")
 SAFE_NFS_CLIENT = re.compile(r"^(\*|[a-zA-Z0-9.*/:_-]{1,128})$")
 SAFE_NFS_OPTIONS = re.compile(r"^[a-zA-Z0-9,=_]{1,256}$")
 SAFE_UUID = re.compile(r"^[0-9a-fA-F-]{1,36}$")
-SAFE_FSTYPE = re.compile(r"^(ext2|ext3|ext4|xfs|btrfs|vfat|exfat|ntfs|ntfs-3g|f2fs|jfs|reiserfs|tmpfs|nfs|nfs4|cifs|auto)$")
-SAFE_MOUNT_OPTIONS = re.compile(r"^[a-zA-Z0-9,=_.@-]{1,256}$")
+SAFE_FSTYPE = re.compile(r"^(ext2|ext3|ext4|xfs|btrfs|vfat|exfat|ntfs|ntfs-3g|f2fs|jfs|reiserfs|tmpfs|nfs|nfs4|cifs|auto|none|udf|iso9660|udf,iso9660)$")
+SAFE_MOUNT_OPTIONS = re.compile(r"^[a-zA-Z0-9,=_.@/:+-]{1,512}$")
 
 def validate_name(value, field="naam"):
     if not value or not SAFE_NAME.match(value):
@@ -321,6 +321,11 @@ def validate_uuid(value):
         raise ValueError("Ongeldige UUID")
     return value
 
+def validate_spec(value):
+    if not value or not SAFE_PATH.match(value) or ".." in value:
+        raise ValueError("Ongeldig apparaat/spec")
+    return value
+
 def validate_fstype(value):
     if not value or not SAFE_FSTYPE.match(value):
         raise ValueError("Ongeldig bestandssysteem")
@@ -368,6 +373,23 @@ def do_update():
 def remove_mount(uuid):
     uuid = validate_uuid(uuid)
     run_script("disk-mounts", "remove", uuid)
+    return jsonify({"ok": True})
+
+@app.post("/api/mounts/update-by-spec")
+def update_mount_by_spec():
+    data = request.json or {}
+    spec = validate_spec(data.get("spec", ""))
+    mountpoint = validate_path(data.get("mountpoint", ""))
+    fstype = validate_fstype(data.get("fstype", ""))
+    options = validate_mount_options(data.get("options", "defaults"))
+    run_script("disk-mounts", "update-by-spec", spec, mountpoint, fstype, options)
+    return jsonify({"ok": True})
+
+@app.post("/api/mounts/remove-by-spec")
+def remove_mount_by_spec():
+    data = request.json or {}
+    spec = validate_spec(data.get("spec", ""))
+    run_script("disk-mounts", "remove-by-spec", spec)
     return jsonify({"ok": True})
 
 if __name__ == "__main__":

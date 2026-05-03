@@ -473,10 +473,10 @@ function renderMounts() {
           : '<span class="badge bg-secondary">nee</span>';
         const editBtn = m.uuid
           ? `<button class="btn btn-sm btn-outline-secondary" onclick="openEditMount('${uuid}','${escapeHtml(m.mountpoint)}','${escapeHtml(m.fstype)}','${escapeHtml(m.options)}')">Bewerken</button> `
-          : "";
+          : `<button class="btn btn-sm btn-outline-secondary" onclick="openEditMountBySpec('${escapeHtml(m.spec)}','${escapeHtml(m.mountpoint)}','${escapeHtml(m.fstype)}','${escapeHtml(m.options)}')">Bewerken</button> `;
         const delBtn = m.uuid
           ? `<button class="btn btn-sm btn-outline-danger" onclick="removeMount('${uuid}')">Verwijderen</button>`
-          : "";
+          : `<button class="btn btn-sm btn-outline-danger" onclick="removeBySpec('${escapeHtml(m.spec)}')">Verwijderen</button>`;
         return `<tr>
           <td>${display}</td>
           <td class="mono">${escapeHtml(m.mountpoint)}</td>
@@ -567,8 +567,21 @@ async function addMount() {
 
 function openEditMount(uuid, mountpoint, fstype, options) {
   document.getElementById("editMountUuid").value = uuid;
+  document.getElementById("editMountSpec").value = "";
   const display = document.getElementById("editMountUuidDisplay");
   if (display) display.value = uuid;
+  document.getElementById("editMountPoint").value = mountpoint;
+  document.getElementById("editMountOptions").value = options;
+  const fsSel = document.getElementById("editMountFstype");
+  if ([...fsSel.options].some(o => o.value === fstype)) fsSel.value = fstype;
+  new bootstrap.Modal(document.getElementById("editMountModal")).show();
+}
+
+function openEditMountBySpec(spec, mountpoint, fstype, options) {
+  document.getElementById("editMountUuid").value = "";
+  document.getElementById("editMountSpec").value = spec;
+  const display = document.getElementById("editMountUuidDisplay");
+  if (display) display.value = spec;
   document.getElementById("editMountPoint").value = mountpoint;
   document.getElementById("editMountOptions").value = options;
   const fsSel = document.getElementById("editMountFstype");
@@ -579,10 +592,15 @@ function openEditMount(uuid, mountpoint, fstype, options) {
 async function saveEditMount() {
   try {
     const uuid = document.getElementById("editMountUuid").value;
+    const spec = document.getElementById("editMountSpec").value;
     const mountpoint = validatePath(document.getElementById("editMountPoint").value.trim());
     const fstype = document.getElementById("editMountFstype").value;
     const options = document.getElementById("editMountOptions").value.trim() || "defaults";
-    await api("POST", "/mounts/update", { uuid, mountpoint, fstype, options });
+    if (spec) {
+      await api("POST", "/mounts/update-by-spec", { spec, mountpoint, fstype, options });
+    } else {
+      await api("POST", "/mounts/update", { uuid, mountpoint, fstype, options });
+    }
     bootstrap.Modal.getInstance(document.getElementById("editMountModal")).hide();
     alertMsg("success", "Mount bijgewerkt");
     await loadMounts();
@@ -593,6 +611,15 @@ async function removeMount(uuid) {
   if (!confirm(`Mount met UUID ${uuid} verwijderen uit fstab?`)) return;
   try {
     await api("DELETE", `/mounts/${encodeURIComponent(uuid)}`);
+    alertMsg("success", "Mount verwijderd uit fstab");
+    await loadMounts();
+  } catch (e) { alertMsg("danger", e.message); }
+}
+
+async function removeBySpec(spec) {
+  if (!confirm(`Mount ${spec} verwijderen uit fstab?`)) return;
+  try {
+    await api("POST", "/mounts/remove-by-spec", { spec });
     alertMsg("success", "Mount verwijderd uit fstab");
     await loadMounts();
   } catch (e) { alertMsg("danger", e.message); }
