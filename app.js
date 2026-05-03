@@ -440,9 +440,10 @@ async function loadMounts() {
 
 function renderMounts() {
   const disks = state.disks || [];
+  const mountedUuids = new Set((state.mounts || []).map(m => m.uuid).filter(Boolean));
   document.getElementById("disksTable").innerHTML = disks.length
     ? disks.map(d => {
-        const hasUuid = !!d.uuid;
+        const hasUuid = !!d.uuid && !mountedUuids.has(d.uuid);
         const btnUse = hasUuid
           ? `<button class="btn btn-sm btn-outline-primary" onclick="useDiskUuid('${escapeHtml(d.uuid)}','${escapeHtml(d.fstype)}')">Gebruik UUID</button>`
           : `<span class="text-muted">-</span>`;
@@ -486,7 +487,6 @@ function renderMounts() {
     : '<tr><td colspan="6" class="text-muted">Geen mounts geconfigureerd</td></tr>';
 
   // Populate UUID dropdown with available (not yet in fstab) disk UUIDs
-  const mountedUuids = new Set((state.mounts || []).map(m => m.uuid).filter(Boolean));
   const uuidSel = document.getElementById("mountUuid");
   if (uuidSel) {
     const currentVal = uuidSel.value;
