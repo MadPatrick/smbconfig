@@ -461,7 +461,15 @@
                 </div>
                 <div class="col-12">
                   <label class="form-label mono">guest account</label>
-                  <input id="cfg-guest-account" class="form-control" placeholder="nobody">
+                  <select id="cfg-guest-account" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="nobody">nobody</option>
+                    <option value="guest">guest</option>
+                    <option value="nfsnobody">nfsnobody</option>
+                    <option value="www-data">www-data</option>
+                    <option value="ftp">ftp</option>
+                    <option value="anonymous">anonymous</option>
+                  </select>
                 </div>
                 <div class="col-12">
                   <label class="form-label mono">map to guest</label>
@@ -565,7 +573,20 @@
               <div class="row g-2">
                 <div class="col-12">
                   <label class="form-label mono">log level</label>
-                  <input id="cfg-log-level" type="number" class="form-control" placeholder="1">
+                  <select id="cfg-log-level" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="0">0 – geen logging</option>
+                    <option value="1">1 – alleen fouten (standaard)</option>
+                    <option value="2">2 – waarschuwingen + fouten</option>
+                    <option value="3">3 – meldingen + bovenstaande</option>
+                    <option value="4">4 – debug basisniveau</option>
+                    <option value="5">5 – debug niveau 5</option>
+                    <option value="6">6 – debug niveau 6</option>
+                    <option value="7">7 – debug niveau 7</option>
+                    <option value="8">8 – debug niveau 8</option>
+                    <option value="9">9 – debug niveau 9</option>
+                    <option value="10">10 – maximale verbositeit</option>
+                  </select>
                 </div>
                 <div class="col-12">
                   <label class="form-label mono">max log size</label>
@@ -573,7 +594,22 @@
                 </div>
                 <div class="col-12">
                   <label class="form-label mono">logging</label>
-                  <input id="cfg-logging" class="form-control" placeholder="file">
+                  <select id="cfg-logging" class="form-select">
+                    <option value="">-- niet ingesteld --</option>
+                    <option value="file">file</option>
+                    <option value="syslog">syslog</option>
+                    <option value="syslog@0">syslog@0</option>
+                    <option value="syslog@1">syslog@1</option>
+                    <option value="syslog@2">syslog@2</option>
+                    <option value="syslog@3">syslog@3</option>
+                    <option value="systemd">systemd</option>
+                    <option value="journal">journal</option>
+                    <option value="ringbuf">ringbuf</option>
+                    <option value="syslog file">syslog file</option>
+                    <option value="syslog@1 file">syslog@1 file</option>
+                    <option value="syslog@2 file">syslog@2 file</option>
+                    <option value="systemd file">systemd file</option>
+                  </select>
                 </div>
                 <div class="col-12">
                   <label class="form-label mono">log file</label>

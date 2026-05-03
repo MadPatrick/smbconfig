@@ -144,6 +144,21 @@ function render() {
 
   fillSmbConfigForm(cfg);
 
+  ["cfg-guest-account", "cfg-log-level", "cfg-logging"].forEach(id => {
+    const cfgKey = Object.entries(CONFIG_FIELDS).find(([, v]) => v === id)?.[0];
+    if (!cfgKey) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const currentVal = cfg[cfgKey] || "";
+    if (currentVal && !Array.from(el.options).some(o => o.value === currentVal)) {
+      const opt = document.createElement("option");
+      opt.value = currentVal;
+      opt.text = currentVal;
+      el.appendChild(opt);
+    }
+    el.value = currentVal;
+  });
+
   const ifaceEl = document.getElementById("cfg-interfaces");
   if (ifaceEl) {
     const currentVal = cfg["interfaces"] || "";
