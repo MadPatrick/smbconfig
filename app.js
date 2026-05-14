@@ -176,9 +176,11 @@ function render() {
   document.getElementById("usersTable").innerHTML = state.users.map(u => `
     <tr>
       <td class="mono">${escapeHtml(u.name)}</td>
-      <td>${u.disabled ? '<span class="badge bg-warning text-dark">disabled</span>' : '<span class="badge bg-success">enabled</span>'}</td>
+      <td>${u.disabled ? '<span class="badge bg-warning text-dark">uitgeschakeld</span>' : '<span class="badge bg-success">ingeschakeld</span>'}</td>
       <td>
-        <button class="btn btn-sm btn-outline-warning" onclick="disableUser('${escapeHtml(u.name)}')">Disable</button>
+        ${u.disabled
+          ? `<button class="btn btn-sm btn-outline-success" onclick="enableUser('${escapeHtml(u.name)}')">Inschakelen</button>`
+          : `<button class="btn btn-sm btn-outline-warning" onclick="disableUser('${escapeHtml(u.name)}')">Uitschakelen</button>`}
         <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${escapeHtml(u.name)}')">Verwijderen</button>
       </td>
     </tr>`).join("");
@@ -256,7 +258,7 @@ function fillSelect(id, values) {
   el.innerHTML = values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
 }
 
-async function loadAll() {
+async function loadAll(silent = false) {
   try {
     const [stateData, smbconfig, interfaces, sysinfo, nfs] = await Promise.all([
       api("GET", "/state"),
@@ -268,9 +270,9 @@ async function loadAll() {
     state = { ...stateData, smbconfig, interfaces, sysinfo, nfs };
     render();
   } catch (e) {
-    alertMsg("danger", "Kan gegevens niet laden: " + e.message);
+    if (!silent) alertMsg("danger", "Kan gegevens niet laden: " + e.message);
   }
-  await loadMounts();
+  await loadMounts(silent);
 }
 
 async function createUser() {
@@ -285,8 +287,8 @@ async function createUser() {
     document.getElementById("newPassword").value = "";
     document.getElementById("newPasswordConfirm").value = "";
     alertMsg("success", "Gebruiker aangemaakt");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function disableUser(username) {
@@ -294,8 +296,17 @@ async function disableUser(username) {
   try {
     await api("POST", `/users/${encodeURIComponent(username)}/disable`);
     alertMsg("success", "Gebruiker uitgeschakeld");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
+}
+
+async function enableUser(username) {
+  if (!confirm(`Gebruiker ${username} inschakelen?`)) return;
+  try {
+    await api("POST", `/users/${encodeURIComponent(username)}/enable`);
+    alertMsg("success", "Gebruiker ingeschakeld");
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function deleteUser(username) {
@@ -303,8 +314,8 @@ async function deleteUser(username) {
   try {
     await api("DELETE", `/users/${encodeURIComponent(username)}`);
     alertMsg("success", "Gebruiker verwijderd");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function createGroup() {
@@ -313,8 +324,8 @@ async function createGroup() {
     await api("POST", "/groups", { groupname });
     document.getElementById("newGroup").value = "";
     alertMsg("success", "Groep aangemaakt");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function addUserToGroup() {
@@ -325,8 +336,8 @@ async function addUserToGroup() {
     validateName(groupname, "groepsnaam");
     await api("POST", "/groups/add-user", { username, groupname });
     alertMsg("success", "Gebruiker toegevoegd aan groep");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function removeUserFromGroup(username, groupname) {
@@ -334,8 +345,8 @@ async function removeUserFromGroup(username, groupname) {
   try {
     await api("POST", "/groups/remove-user", { username, groupname });
     alertMsg("success", `Gebruiker ${username} verwijderd uit groep ${groupname}`);
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function deleteGroup(groupname) {
@@ -343,8 +354,8 @@ async function deleteGroup(groupname) {
   try {
     await api("DELETE", `/groups/${encodeURIComponent(groupname)}`);
     alertMsg("success", "Groep verwijderd");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function createShare() {
@@ -357,8 +368,8 @@ async function createShare() {
     document.getElementById("shareName").value = "";
     document.getElementById("sharePath").value = "";
     alertMsg("success", "Share aangemaakt");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function updateShare(sharename, silent = false) {
@@ -373,19 +384,17 @@ async function updateShare(sharename, silent = false) {
     const change_notify = document.getElementById("scn-" + sharename).checked ? "yes" : "no";
     if (group) validateName(group, "groepsnaam");
     await api("POST", `/shares/${encodeURIComponent(sharename)}/update`, { group, read_only, browseable, guest_ok, oplocks, level2_oplocks, change_notify });
-    if (!silent) {
-      alertMsg("success", `Share ${escapeHtml(sharename)} opgeslagen`);
-      await loadAll();
-    }
-  } catch (e) { alertMsg("danger", e.message); }
+    if (!silent) alertMsg("success", `Share ${escapeHtml(sharename)} opgeslagen`);
+  } catch (e) { alertMsg("danger", e.message); return; }
+  if (!silent) await loadAll(true);
 }
 
 async function updateAllShares() {
   try {
     await Promise.all(state.shares.map(s => updateShare(s.name, true)));
     alertMsg("success", "Alle shares opgeslagen");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function deleteShare(sharename) {
@@ -393,8 +402,8 @@ async function deleteShare(sharename) {
   try {
     await api("DELETE", `/shares/${encodeURIComponent(sharename)}`);
     alertMsg("success", "Share verwijderd");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 function fillSmbConfigForm(cfg) {
@@ -413,8 +422,8 @@ async function saveSmbConfig() {
     }
     await api("POST", "/smbconfig", data);
     alertMsg("success", "Configuratie opgeslagen");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function createNfsExport() {
@@ -427,8 +436,8 @@ async function createNfsExport() {
     document.getElementById("nfsClient").value = "";
     document.getElementById("nfsOptions").value = "";
     alertMsg("success", "NFS export aangemaakt");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function updateNfsExport(path, silent = false) {
@@ -438,19 +447,17 @@ async function updateNfsExport(path, silent = false) {
     const client = document.getElementById("nc-" + eid).value.trim();
     const options = document.getElementById("no-" + eid).value.trim();
     await api("POST", "/nfs/update", { path, client, options });
-    if (!silent) {
-      alertMsg("success", `NFS export ${escapeHtml(path)} opgeslagen`);
-      await loadAll();
-    }
-  } catch (e) { alertMsg("danger", e.message); }
+    if (!silent) alertMsg("success", `NFS export ${escapeHtml(path)} opgeslagen`);
+  } catch (e) { alertMsg("danger", e.message); return; }
+  if (!silent) await loadAll(true);
 }
 
 async function updateAllNfsExports() {
   try {
     await Promise.all((state.nfs || []).map(e => updateNfsExport(e.path, true)));
     alertMsg("success", "Alle NFS exports opgeslagen");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
 async function deleteNfsExport(path) {
@@ -458,11 +465,11 @@ async function deleteNfsExport(path) {
   try {
     await api("DELETE", `/nfs/${path.slice(1)}`);
     alertMsg("success", "NFS export verwijderd");
-    await loadAll();
-  } catch (e) { alertMsg("danger", e.message); }
+  } catch (e) { alertMsg("danger", e.message); return; }
+  await loadAll(true);
 }
 
-async function loadMounts() {
+async function loadMounts(silent = false) {
   try {
     const [mounts, disks] = await Promise.all([
       api("GET", "/mounts"),
@@ -472,7 +479,7 @@ async function loadMounts() {
     state.disks = disks;
     renderMounts();
   } catch (e) {
-    alertMsg("danger", "Kan schijfgegevens niet laden: " + e.message);
+    if (!silent) alertMsg("danger", "Kan schijfgegevens niet laden: " + e.message);
   }
 }
 
