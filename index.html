@@ -181,7 +181,7 @@
             <div class="col-md-3"><input id="newUsername" class="form-control" placeholder="Gebruikersnaam"></div>
             <div class="col-md-3"><input id="newPassword" type="password" class="form-control" placeholder="Wachtwoord"></div>
             <div class="col-md-3"><input id="newPasswordConfirm" type="password" class="form-control" placeholder="Wachtwoord bevestigen"></div>
-            <div class="col-md-3"><button class="btn btn-success w-100" onclick="createUser()">Aanmaken</button></div>
+            <div class="col-md-3"><button class="btn btn-success" onclick="createUser()">Aanmaken</button></div>
           </div>
         </div>
 
@@ -206,7 +206,7 @@
           <h5>Nieuwe groep</h5>
           <div class="row g-2">
             <div class="col-md-8"><input id="newGroup" class="form-control" placeholder="Groepsnaam"></div>
-            <div class="col-md-4"><button class="btn btn-success w-100" onclick="createGroup()">Aanmaken</button></div>
+            <div class="col-md-4"><button class="btn btn-success" onclick="createGroup()">Aanmaken</button></div>
           </div>
         </div>
 
@@ -215,7 +215,7 @@
           <div class="row g-2">
             <div class="col-md-5"><select id="groupUserSelect" class="form-select"></select></div>
             <div class="col-md-5"><select id="groupSelect" class="form-select"></select></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="addUserToGroup()">Toevoegen</button></div>
+            <div class="col-md-2"><button class="btn btn-primary" onclick="addUserToGroup()">Toevoegen</button></div>
           </div>
         </div>
 
@@ -242,7 +242,7 @@
             <div class="col-md-3"><input id="shareName" class="form-control" placeholder="Share naam"></div>
             <div class="col-md-5"><input id="sharePath" class="form-control" placeholder="/srv/samba/share"></div>
             <div class="col-md-2"><select id="shareGroup" class="form-select"></select></div>
-            <div class="col-md-2"><button class="btn btn-success w-100" onclick="createShare()">Aanmaken</button></div>
+            <div class="col-md-2"><button class="btn btn-success" onclick="createShare()">Aanmaken</button></div>
           </div>
           <div class="form-text">Dit maakt de map aan en voegt een include-regel toe in de gegenereerde smb.conf snippet.</div>
         </div>
@@ -273,7 +273,7 @@
             <div class="col-md-4"><input id="nfsPath" class="form-control" placeholder="/srv/nfs/share"></div>
             <div class="col-md-3"><input id="nfsClient" class="form-control" placeholder="* of 192.168.1.0/24"></div>
             <div class="col-md-3"><input id="nfsOptions" class="form-control" placeholder="rw,sync,no_subtree_check"></div>
-            <div class="col-md-2"><button class="btn btn-success w-100" onclick="createNfsExport()">Aanmaken</button></div>
+            <div class="col-md-2"><button class="btn btn-success" onclick="createNfsExport()">Aanmaken</button></div>
           </div>
           <div class="form-text">Client: gebruik <code>*</code> voor iedereen, of een IP/subnet zoals <code>192.168.1.0/24</code>. Opties: bijv. <code>rw,sync,no_subtree_check</code>.</div>
         </div>
@@ -344,7 +344,7 @@
               <input id="mountOptions" class="form-control" value="defaults">
             </div>
             <div class="col-md-2 d-flex align-items-end">
-              <button class="btn btn-success w-100" onclick="addMount()">Toevoegen</button>
+              <button class="btn btn-success" onclick="addMount()">Toevoegen</button>
             </div>
           </div>
           <div class="form-text">Selecteer een UUID uit het dropdown menu of klik op "Gebruik UUID" in de schijventabel. De mount wordt direct actief en bij elke herstart opnieuw gekoppeld.</div>
