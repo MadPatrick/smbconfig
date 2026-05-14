@@ -298,8 +298,7 @@ async function disableUser(username) {
     alertMsg("success", "Gebruiker uitgeschakeld");
     const u = state.users.find(u => u.name === username);
     if (u) { u.disabled = true; render(); }
-  } catch (e) { alertMsg("danger", e.message); return; }
-  await loadAll(true);
+  } catch (e) { alertMsg("danger", e.message); }
 }
 
 async function enableUser(username) {
@@ -309,8 +308,7 @@ async function enableUser(username) {
     alertMsg("success", "Gebruiker ingeschakeld");
     const u = state.users.find(u => u.name === username);
     if (u) { u.disabled = false; render(); }
-  } catch (e) { alertMsg("danger", e.message); return; }
-  await loadAll(true);
+  } catch (e) { alertMsg("danger", e.message); }
 }
 
 async function deleteUser(username) {
