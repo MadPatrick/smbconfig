@@ -4,6 +4,7 @@
 #   smb-users list
 #   smb-users create <gebruikersnaam> <wachtwoord>
 #   smb-users disable <gebruikersnaam>
+#   smb-users enable <gebruikersnaam>
 #   smb-users delete <gebruikersnaam>
 set -euo pipefail
 
@@ -25,7 +26,7 @@ import pwd, subprocess, json
 disabled = set()
 
 try:
-    out = subprocess.check_output(["pdbedit", "-L", "-v"], text=True, encoding="utf-8", errors="replace", stderr=subprocess.DEVNULL)
+    out = subprocess.check_output(["pdbedit", "-L", "-v"], text=True, encoding="utf-8", errors="replace", stderr=subprocess.DEVNULL, timeout=10)
     current = None
     for line in out.splitlines():
         if line.startswith("Unix username:"):
@@ -70,6 +71,13 @@ PY
     passwd -l "$USER_NAME" >/dev/null 2>&1 || true
     ;;
 
+  enable)
+    validate_name "${2:-}"
+    USER_NAME="$2"
+    smbpasswd -e "$USER_NAME" 2>/dev/null || true
+    passwd -u "$USER_NAME" >/dev/null 2>&1 || true
+    ;;
+
   delete)
     validate_name "${2:-}"
     USER_NAME="$2"
@@ -78,7 +86,7 @@ PY
     ;;
 
   *)
-    echo "Gebruik: smb-users {list|create <gebruiker> <wachtwoord>|disable <gebruiker>|delete <gebruiker>}" >&2
+    echo "Gebruik: smb-users {list|create <gebruiker> <wachtwoord>|disable <gebruiker>|enable <gebruiker>|delete <gebruiker>}" >&2
     exit 1
     ;;
 esac

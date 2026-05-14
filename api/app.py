@@ -29,8 +29,11 @@ def validate_path(value):
 
 def run_script(*args, stdin_data=None):
     cmd = ["sudo", str(BASE_DIR / "scripts" / args[0]), *args[1:]]
-    completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace",
-                               input=stdin_data)
+    try:
+        completed = subprocess.run(cmd, text=True, capture_output=True, encoding="utf-8", errors="replace",
+                                   input=stdin_data, timeout=60)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Script time-out")
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Script fout")
     return completed.stdout.strip()
@@ -194,6 +197,12 @@ def create_user():
 def disable_user(username):
     username = validate_name(username, "gebruikersnaam")
     run_script("smb-users", "disable", username)
+    return jsonify({"ok": True})
+
+@app.post("/api/users/<username>/enable")
+def enable_user(username):
+    username = validate_name(username, "gebruikersnaam")
+    run_script("smb-users", "enable", username)
     return jsonify({"ok": True})
 
 @app.delete("/api/users/<username>")
