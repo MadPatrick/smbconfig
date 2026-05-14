@@ -296,6 +296,8 @@ async function disableUser(username) {
   try {
     await api("POST", `/users/${encodeURIComponent(username)}/disable`);
     alertMsg("success", "Gebruiker uitgeschakeld");
+    const u = state.users.find(u => u.name === username);
+    if (u) { u.disabled = true; render(); }
   } catch (e) { alertMsg("danger", e.message); return; }
   await loadAll(true);
 }
@@ -305,6 +307,8 @@ async function enableUser(username) {
   try {
     await api("POST", `/users/${encodeURIComponent(username)}/enable`);
     alertMsg("success", "Gebruiker ingeschakeld");
+    const u = state.users.find(u => u.name === username);
+    if (u) { u.disabled = false; render(); }
   } catch (e) { alertMsg("danger", e.message); return; }
   await loadAll(true);
 }
@@ -314,6 +318,8 @@ async function deleteUser(username) {
   try {
     await api("DELETE", `/users/${encodeURIComponent(username)}`);
     alertMsg("success", "Gebruiker verwijderd");
+    state.users = state.users.filter(u => u.name !== username);
+    render();
   } catch (e) { alertMsg("danger", e.message); return; }
   await loadAll(true);
 }
