@@ -39,6 +39,28 @@ try:
 except Exception:
     pass
 
+# Fallback: also check Linux account lock in /etc/shadow.
+# Users created via smb-users start with '!' in shadow (no Unix password
+# set by useradd). passwd -l prepends another '!', resulting in '!!' or
+# '!<hash>'. A bare '!' therefore means "no password" (not explicitly
+# locked), while length > 1 and starting with '!' means locked.
+try:
+    with open("/etc/shadow", "r", encoding="utf-8", errors="replace") as _f:
+        for _line in _f:
+            _parts = _line.strip().split(":")
+            if len(_parts) >= 2:
+                _name, _pw = _parts[0], _parts[1]
+                # '!!' = locked (was no-password user); '!$hash' = locked (had password)
+                if len(_pw) > 1 and _pw.startswith("!"):
+                    try:
+                        _p = pwd.getpwnam(_name)
+                        if 1000 <= _p.pw_uid <= 59999:  # regular user UID range
+                            disabled.add(_name)
+                    except KeyError:
+                        pass
+except Exception:
+    pass
+
 users = [
     {"name": p.pw_name, "disabled": p.pw_name in disabled}
     for p in pwd.getpwall()
