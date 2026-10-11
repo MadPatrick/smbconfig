@@ -194,6 +194,32 @@
             </table>
           </div>
         </div>
+
+        <!-- Wachtwoord-modal -->
+        <div class="modal fade" id="passwordModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Wachtwoord wijzigen: <span id="passwordModalUser" class="mono"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-2">
+                  <label class="form-label">Nieuw wachtwoord</label>
+                  <input id="changePassword" type="password" class="form-control" autocomplete="new-password">
+                </div>
+                <div class="mb-2">
+                  <label class="form-label">Wachtwoord bevestigen</label>
+                  <input id="changePasswordConfirm" type="password" class="form-control" autocomplete="new-password">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary" onclick="savePassword()">Opslaan</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="page-groups" class="page d-none">

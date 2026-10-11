@@ -193,6 +193,16 @@ def create_user():
     run_script("smb-users", "create", username, password)
     return jsonify({"ok": True})
 
+@app.post("/api/users/<username>/password")
+def change_user_password(username):
+    username = validate_name(username, "gebruikersnaam")
+    data = request.json or {}
+    password = data.get("password", "")
+    if len(password) < 8:
+        raise ValueError("Wachtwoord moet minimaal 8 tekens zijn")
+    run_script("smb-users", "passwd", username, password)
+    return jsonify({"ok": True})
+
 @app.post("/api/users/<username>/disable")
 def disable_user(username):
     username = validate_name(username, "gebruikersnaam")

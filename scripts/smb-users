@@ -3,6 +3,7 @@
 # Gebruik:
 #   smb-users list
 #   smb-users create <gebruikersnaam> <wachtwoord>
+#   smb-users passwd <gebruikersnaam> <nieuw wachtwoord>
 #   smb-users disable <gebruikersnaam>
 #   smb-users enable <gebruikersnaam>
 #   smb-users delete <gebruikersnaam>
@@ -86,6 +87,21 @@ PY
     smbpasswd -e "$USER_NAME"
     ;;
 
+  passwd)
+    validate_name "${2:-}"
+    USER_NAME="$2"
+    PASSWORD="${3:-}"
+    if [ ${#PASSWORD} -lt 8 ]; then
+      echo "Wachtwoord te kort" >&2
+      exit 1
+    fi
+    if ! id "$USER_NAME" >/dev/null 2>&1; then
+      echo "Gebruiker bestaat niet" >&2
+      exit 1
+    fi
+    printf "%s\n%s\n" "$PASSWORD" "$PASSWORD" | smbpasswd -s "$USER_NAME"
+    ;;
+
   disable)
     validate_name "${2:-}"
     USER_NAME="$2"
@@ -108,7 +124,7 @@ PY
     ;;
 
   *)
-    echo "Gebruik: smb-users {list|create <gebruiker> <wachtwoord>|disable <gebruiker>|enable <gebruiker>|delete <gebruiker>}" >&2
+    echo "Gebruik: smb-users {list|create <gebruiker> <wachtwoord>|passwd <gebruiker> <wachtwoord>|disable <gebruiker>|enable <gebruiker>|delete <gebruiker>}" >&2
     exit 1
     ;;
 esac
