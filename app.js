@@ -178,6 +178,7 @@ function render() {
       <td class="mono">${escapeHtml(u.name)}</td>
       <td>${u.disabled ? '<span class="badge bg-warning text-dark">uitgeschakeld</span>' : '<span class="badge bg-success">ingeschakeld</span>'}</td>
       <td>
+        <button class="btn btn-sm btn-outline-secondary" onclick="openPasswordModal('${escapeHtml(u.name)}')">Wachtwoord</button>
         ${u.disabled
           ? `<button class="btn btn-sm btn-outline-success" onclick="enableUser('${escapeHtml(u.name)}')">Inschakelen</button>`
           : `<button class="btn btn-sm btn-outline-warning" onclick="disableUser('${escapeHtml(u.name)}')">Uitschakelen</button>`}
@@ -289,6 +290,28 @@ async function createUser() {
     alertMsg("success", "Gebruiker aangemaakt");
   } catch (e) { alertMsg("danger", e.message); return; }
   await loadAll(true);
+}
+
+let passwordModalUser = null;
+
+function openPasswordModal(username) {
+  passwordModalUser = username;
+  document.getElementById("passwordModalUser").innerText = username;
+  document.getElementById("changePassword").value = "";
+  document.getElementById("changePasswordConfirm").value = "";
+  new bootstrap.Modal(document.getElementById("passwordModal")).show();
+}
+
+async function savePassword() {
+  try {
+    const password = document.getElementById("changePassword").value;
+    const confirmValue = document.getElementById("changePasswordConfirm").value;
+    if (password.length < 8) throw new Error("Wachtwoord moet minimaal 8 tekens zijn");
+    if (password !== confirmValue) throw new Error("Wachtwoorden komen niet overeen");
+    await api("POST", `/users/${encodeURIComponent(passwordModalUser)}/password`, { password });
+    bootstrap.Modal.getInstance(document.getElementById("passwordModal")).hide();
+    alertMsg("success", `Wachtwoord van ${passwordModalUser} gewijzigd`);
+  } catch (e) { alertMsg("danger", e.message); }
 }
 
 async function disableUser(username) {
